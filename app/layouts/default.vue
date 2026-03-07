@@ -1,9 +1,33 @@
 <script setup lang="ts">
 import type { Filters } from '~/components/FilterDrawer.vue'
 
+const route = useRoute()
+const router = useRouter()
+
 const searchQuery = ref('')
 const isFilterOpen = ref(false)
-const activeFilters = ref<Filters | null>(null)
+const filters = ref<Filters>({
+  playerCount: null,
+  playTime: null,
+  minRating: 0
+})
+
+// Provide filters to child pages
+provide('searchFilters', filters)
+
+// Sync search query with URL when on search page
+watch(() => route.query.q, (newQuery) => {
+  if (route.path === '/search') {
+    searchQuery.value = (newQuery as string) || ''
+  }
+}, { immediate: true })
+
+// Clear search when leaving search page
+watch(() => route.path, (newPath) => {
+  if (newPath !== '/search') {
+    searchQuery.value = ''
+  }
+})
 
 const navigation = [
   { name: 'Home', icon: 'mdi:home', to: '/' },
@@ -22,15 +46,20 @@ function closeFilters() {
 }
 
 function handleSearch(query: string) {
-  if (query.trim()) {
-    navigateTo(`/search?q=${encodeURIComponent(query)}`)
+  // If already on search page, just update URL query param (no full navigation)
+  if (route.path === '/search') {
+    router.replace({ 
+      path: '/search', 
+      query: query ? { q: query } : {} 
+    })
+  } else {
+    // Navigate to search page
+    navigateTo(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
   }
 }
 
-function handleApplyFilters(filters: Filters) {
-  activeFilters.value = filters
-  // You can use activeFilters to filter results or pass to search
-  console.log('Applied filters:', filters)
+function handleApplyFilters(newFilters: Filters) {
+  filters.value = newFilters
 }
 </script>
 
