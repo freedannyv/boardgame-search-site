@@ -55,10 +55,6 @@ function handleToggleWishlist(gameId: string) {
     wishlistIds.value.push(gameId)
   }
 }
-
-function handleLogPlay(gameId: string) {
-  console.log('Log play for game:', gameId)
-}
 </script>
 
 <template>
@@ -87,6 +83,8 @@ function handleLogPlay(gameId: string) {
         </div>
       </div>
     </section>
+    
+    <GameNightPicker :games="[...recommendedGames, ...popularGames]" />
 
     <!-- Recommended For You -->
     <section class="mb-6">
@@ -110,7 +108,6 @@ function handleLogPlay(gameId: string) {
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"
-          @log-play="handleLogPlay"
         />
       </div>
       
@@ -125,7 +122,6 @@ function handleLogPlay(gameId: string) {
               @add-to-collection="handleAddToCollection"
               @remove-from-collection="handleRemoveFromCollection"
               @toggle-wishlist="handleToggleWishlist"
-              @log-play="handleLogPlay"
             />
           </div>
         </div>
@@ -154,7 +150,6 @@ function handleLogPlay(gameId: string) {
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"
-          @log-play="handleLogPlay"
         />
       </div>
       
@@ -169,7 +164,6 @@ function handleLogPlay(gameId: string) {
               @add-to-collection="handleAddToCollection"
               @remove-from-collection="handleRemoveFromCollection"
               @toggle-wishlist="handleToggleWishlist"
-              @log-play="handleLogPlay"
             />
           </div>
         </div>

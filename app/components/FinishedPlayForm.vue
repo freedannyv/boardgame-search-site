@@ -1,0 +1,282 @@
+<script setup lang="ts">
+interface Game {
+  id: number | string
+  name: string
+  thumbnail?: string | null
+}
+
+interface Player {
+  id: string
+  name: string
+  score?: number | null
+}
+
+interface PlayData {
+  gameId: number | string
+  date: string
+  startTime: string
+  endTime: string
+  players: Player[]
+  winnerId: string | null
+}
+
+const props = defineProps<{
+  game: Game
+  initialPlayers?: Player[]
+  initialDuration?: number
+}>()
+
+const emit = defineEmits<{
+  savePlay: [data: PlayData]
+  cancel: []
+}>()
+
+// Form state
+const today = new Date().toISOString().split('T')[0] as string
+const date = ref<string>(today)
+const startTime = ref<string>('')
+const endTime = ref<string>('')
+const winnerId = ref<string | null>(null)
+
+// Players state
+const players = ref<Player[]>(props.initialPlayers?.map(p => ({ ...p, score: null })) || [])
+const newPlayerName = ref('')
+const showScores = ref(false)
+
+// Set initial times based on duration if provided
+onMounted(() => {
+  const now = new Date()
+  endTime.value = formatTimeValue(now)
+  
+  if (props.initialDuration) {
+    const start = new Date(now.getTime() - props.initialDuration * 1000)
+    startTime.value = formatTimeValue(start)
+  } else {
+    // Default to 1 hour ago
+    const start = new Date(now.getTime() - 60 * 60 * 1000)
+    startTime.value = formatTimeValue(start)
+  }
+})
+
+function formatTimeValue(date: Date): string {
+  return date.toTimeString().slice(0, 5)
+}
+
+function addPlayer() {
+  if (newPlayerName.value.trim()) {
+    players.value.push({
+      id: crypto.randomUUID(),
+      name: newPlayerName.value.trim(),
+      score: null
+    })
+    newPlayerName.value = ''
+  }
+}
+
+function removePlayer(playerId: string) {
+  players.value = players.value.filter(p => p.id !== playerId)
+  if (winnerId.value === playerId) {
+    winnerId.value = null
+  }
+}
+
+function setWinner(playerId: string) {
+  winnerId.value = winnerId.value === playerId ? null : playerId
+}
+
+function handleSave() {
+  emit('savePlay', {
+    gameId: props.game.id,
+    date: date.value,
+    startTime: startTime.value,
+    endTime: endTime.value,
+    players: players.value,
+    winnerId: winnerId.value
+  })
+}
+
+const isValid = computed(() => {
+  return date.value && startTime.value && endTime.value
+})
+</script>
+
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-4 py-4">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          @click="emit('cancel')"
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <Icon name="mdi:arrow-left" class="w-5 h-5 text-gray-600" />
+        </button>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Log Play</p>
+          <h1 class="font-bold text-gray-900 truncate">{{ game.name }}</h1>
+        </div>
+        <div v-if="game.thumbnail" class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+          <img :src="game.thumbnail" :alt="game.name" class="w-full h-full object-cover" />
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 space-y-4">
+      <!-- Date & Time Section -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <h2 class="font-bold text-gray-900 mb-4">When did you play?</h2>
+        
+        <!-- Date -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+          <input
+            v-model="date"
+            type="date"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+          />
+        </div>
+
+        <!-- Time row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+            <input
+              v-model="startTime"
+              type="time"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+            <input
+              v-model="endTime"
+              type="time"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Players Section -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="font-bold text-gray-900">Players</h2>
+              <p class="text-sm text-gray-500">{{ players.length }} player{{ players.length !== 1 ? 's' : '' }}</p>
+            </div>
+            <button
+              type="button"
+              @click="showScores = !showScores"
+              class="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors"
+            >
+              {{ showScores ? 'Hide Scores' : 'Add Scores' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Add player input -->
+        <div class="p-4 border-b border-gray-100">
+          <form @submit.prevent="addPlayer" class="flex gap-2">
+            <input
+              v-model="newPlayerName"
+              type="text"
+              placeholder="Enter player name"
+              class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+            />
+            <button
+              type="submit"
+              :disabled="!newPlayerName.trim()"
+              class="px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+            >
+              <Icon name="mdi:plus" class="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+
+        <!-- Players list -->
+        <div v-if="players.length > 0" class="divide-y divide-gray-100">
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="px-4 py-3"
+          >
+            <div class="flex items-center gap-3">
+              <!-- Winner toggle -->
+              <button
+                type="button"
+                @click="setWinner(player.id)"
+                class="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                :class="winnerId === player.id 
+                  ? 'bg-amber-100 text-amber-600' 
+                  : 'bg-gray-100 text-gray-400 hover:bg-amber-50 hover:text-amber-500'"
+                title="Set as winner"
+              >
+                <Icon name="mdi:trophy" class="w-5 h-5" />
+              </button>
+              
+              <span class="flex-1 font-medium text-gray-900">{{ player.name }}</span>
+              
+              <!-- Score input -->
+              <input
+                v-if="showScores"
+                v-model.number="player.score"
+                type="number"
+                placeholder="Score"
+                class="w-20 px-3 py-2 rounded-lg border border-gray-200 text-center text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              />
+              
+              <button
+                type="button"
+                @click="removePlayer(player.id)"
+                class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Icon name="mdi:close" class="w-5 h-5" />
+              </button>
+            </div>
+            
+            <!-- Winner badge -->
+            <div v-if="winnerId === player.id" class="mt-2 ml-13">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                <Icon name="mdi:trophy" class="w-3 h-3" />
+                Winner
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="p-8 text-center">
+          <Icon name="mdi:account-group-outline" class="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p class="text-gray-500">No players added yet</p>
+          <p class="text-sm text-gray-400 mt-1">Add players who participated</p>
+        </div>
+      </div>
+
+      <!-- Winner Section (if players exist but no winner selected) -->
+      <div v-if="players.length > 0 && !winnerId" class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+        <div class="flex items-start gap-3">
+          <Icon name="mdi:trophy-outline" class="w-5 h-5 text-amber-600 mt-0.5" />
+          <div>
+            <p class="text-sm font-medium text-amber-800">Who won?</p>
+            <p class="text-xs text-amber-600 mt-0.5">Tap the trophy icon next to a player to mark them as the winner</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="px-4 pb-8 pt-4">
+      <button
+        type="button"
+        @click="handleSave"
+        :disabled="!isValid"
+        class="w-full py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-600/20 disabled:bg-gray-300 disabled:shadow-none"
+      >
+        <Icon name="mdi:check" class="w-6 h-6 inline-block mr-2" />
+        Save Play
+      </button>
+    </div>
+  </div>
+</template>

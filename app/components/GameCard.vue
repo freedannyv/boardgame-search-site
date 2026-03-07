@@ -20,7 +20,6 @@ const emit = defineEmits<{
   'addToCollection': [gameId: string]
   'removeFromCollection': [gameId: string]
   'toggleWishlist': [gameId: string]
-  'logPlay': [gameId: string]
 }>()
 
 const hasImage = computed(() => {
@@ -66,16 +65,12 @@ function handleRemoveFromCollection() {
 function handleToggleWishlist() {
   emit('toggleWishlist', props.game.id)
 }
-
-function handleLogPlay() {
-  emit('logPlay', props.game.id)
-}
 </script>
 
 <template>
   <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
     <!-- Image container -->
-    <div class="relative aspect-square bg-gray-100 overflow-hidden">
+    <NuxtLink :to="`/game/${game.id}`" class="block relative aspect-square bg-gray-100 overflow-hidden cursor-pointer">
       <!-- Game image -->
       <img
         v-if="hasImage"
@@ -97,14 +92,15 @@ function handleLogPlay() {
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 md:transition-opacity md:duration-200" />
       
       <!-- Quick action icons - always visible on mobile, hover on desktop -->
-      <div class="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-center gap-3 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-200">
+      <div class="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-end gap-3 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-200">
         <!-- Wishlist toggle -->
         <button
+          v-if="!isInCollection"
           type="button"
           class="flex items-center justify-center w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white hover:scale-110 active:scale-95 transition-all"
           :class="isInWishlist ? 'text-red-500' : 'text-gray-600'"
           :title="isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'"
-          @click.stop="handleToggleWishlist"
+          @click.stop.prevent="handleToggleWishlist"
         >
           <Icon :name="isInWishlist ? 'mdi:heart' : 'mdi:heart-outline'" class="h-6 w-6" />
         </button>
@@ -115,7 +111,7 @@ function handleLogPlay() {
           type="button"
           class="flex items-center justify-center w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-600 hover:bg-white hover:text-indigo-600 hover:scale-110 active:scale-95 transition-all"
           title="Add to collection"
-          @click.stop="handleAddToCollection"
+          @click.stop.prevent="handleAddToCollection"
         >
           <Icon name="mdi:plus" class="h-6 w-6" />
         </button>
@@ -126,20 +122,13 @@ function handleLogPlay() {
           type="button"
           class="flex items-center justify-center w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-indigo-600 hover:bg-white hover:text-red-500 hover:scale-110 active:scale-95 transition-all"
           title="Remove from collection"
-          @click.stop="handleRemoveFromCollection"
+          @click.stop.prevent="handleRemoveFromCollection"
         >
           <Icon name="mdi:minus" class="h-6 w-6" />
         </button>
 
         <!-- Log play -->
-        <button
-          type="button"
-          class="flex items-center justify-center w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm shadow-lg text-gray-600 hover:bg-white hover:text-green-600 hover:scale-110 active:scale-95 transition-all"
-          title="Log a play"
-          @click.stop="handleLogPlay"
-        >
-          <Icon name="mdi:notebook-edit" class="h-6 w-6" />
-        </button>
+        <LogPlayButton :game="game" variant="card" />
       </div>
 
       <!-- Rating badge -->
@@ -150,14 +139,16 @@ function handleLogPlay() {
         <Icon name="mdi:star" class="h-4 w-4 text-yellow-400" />
         {{ displayRating }}
       </div>
-    </div>
+    </NuxtLink>
 
     <!-- Card content -->
     <div class="p-3">
       <!-- Title -->
-      <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight mb-2">
-        {{ game.name }}
-      </h3>
+      <NuxtLink :to="`/game/${game.id}`" class="block">
+        <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight mb-2 hover:text-indigo-600 transition-colors">
+          {{ game.name }}
+        </h3>
+      </NuxtLink>
 
       <!-- Meta info -->
       <div class="flex items-center gap-3 text-sm text-gray-500">

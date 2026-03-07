@@ -20,7 +20,6 @@ const emit = defineEmits<{
   'addToCollection': [gameId: string]
   'removeFromCollection': [gameId: string]
   'toggleWishlist': [gameId: string]
-  'logPlay': [gameId: string]
 }>()
 
 const imageUrl = computed(() => props.game.thumbnail || props.game.image)
@@ -116,13 +115,7 @@ function handleCollectionClick() {
       </button>
 
       <!-- Log play -->
-      <button
-        @click.stop="emit('logPlay', game.id)"
-        class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-emerald-600 hover:bg-gray-100 transition-colors"
-        title="Log play"
-      >
-        <Icon name="mdi:dice-multiple-outline" class="w-5 h-5" />
-      </button>
+      <LogPlayButton :game="game" variant="compact" />
     </div>
   </div>
 </template>

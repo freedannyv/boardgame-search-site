@@ -11,7 +11,6 @@ const emit = defineEmits<{
   'addToCollection': [gameId: string]
   'removeFromCollection': [gameId: string]
   'toggleWishlist': [gameId: string]
-  'logPlay': [gameId: string]
 }>()
 </script>
 
@@ -26,7 +25,6 @@ const emit = defineEmits<{
       @add-to-collection="emit('addToCollection', $event)"
       @remove-from-collection="emit('removeFromCollection', $event)"
       @toggle-wishlist="emit('toggleWishlist', $event)"
-      @log-play="emit('logPlay', $event)"
     />
   </div>
 </template>

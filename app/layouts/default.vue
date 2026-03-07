@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { Filters } from '~/components/FilterDrawer.vue'
+import type { SearchResult } from '~/components/SearchBar.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const searchQuery = ref('')
+const searchResults = ref<SearchResult[]>([])
+const searchLoading = ref(false)
 const isFilterOpen = ref(false)
 const filters = ref<Filters>({
   playerCount: null,
@@ -26,6 +29,7 @@ watch(() => route.query.q, (newQuery) => {
 watch(() => route.path, (newPath) => {
   if (newPath !== '/search') {
     searchQuery.value = ''
+    searchResults.value = []
   }
 })
 
@@ -45,17 +49,56 @@ function closeFilters() {
   isFilterOpen.value = false
 }
 
-function handleSearch(query: string) {
-  // If already on search page, just update URL query param (no full navigation)
+// Mock search for dropdown results
+async function handleSearch(query: string) {
+  // If on search page, update URL directly (dropdown is hidden)
   if (route.path === '/search') {
     router.replace({ 
       path: '/search', 
       query: query ? { q: query } : {} 
     })
-  } else {
-    // Navigate to search page
-    navigateTo(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+    return
   }
+  
+  // Otherwise, fetch dropdown results
+  if (!query.trim()) {
+    searchResults.value = []
+    return
+  }
+  
+  searchLoading.value = true
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
+  // Mock results
+  const mockGames = [
+    { id: '1', name: 'Gloomhaven', average: 8.7, yearPublished: 2017 },
+    { id: '2', name: 'Brass: Birmingham', average: 8.6, yearPublished: 2018 },
+    { id: '3', name: 'Pandemic Legacy: Season 1', average: 8.5, yearPublished: 2015 },
+    { id: '4', name: 'Twilight Imperium', average: 8.6, yearPublished: 2017 },
+    { id: '5', name: 'Spirit Island', average: 8.3, yearPublished: 2017 },
+    { id: '6', name: 'Terraforming Mars', average: 8.4, yearPublished: 2016 },
+  ]
+  
+  // Filter by query
+  searchResults.value = mockGames.filter(g => 
+    g.name.toLowerCase().includes(query.toLowerCase())
+  )
+  
+  searchLoading.value = false
+}
+
+function handleSelectGame(result: SearchResult) {
+  // Navigate to game detail page (or handle as needed)
+  navigateTo(`/game/${result.id}`)
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
+function handleViewAllResults() {
+  // Navigate to search page with current query
+  navigateTo(`/search?q=${encodeURIComponent(searchQuery.value)}`)
 }
 
 function handleApplyFilters(newFilters: Filters) {
@@ -87,7 +130,12 @@ function handleApplyFilters(newFilters: Filters) {
           <SearchBar 
             v-model="searchQuery" 
             class="flex-1"
-            @search="handleSearch" 
+            :results="searchResults"
+            :loading="searchLoading"
+            :show-results="route.path !== '/search'"
+            @search="handleSearch"
+            @select="handleSelectGame"
+            @view-all="handleViewAllResults"
           />
           <button
             type="button"
@@ -99,6 +147,9 @@ function handleApplyFilters(newFilters: Filters) {
           </button>
         </div>
       </div>
+
+      <!-- Active Session Banner -->
+      <ActiveSessionBanner />
     </header>
 
     <!-- Main content -->
@@ -107,8 +158,8 @@ function handleApplyFilters(newFilters: Filters) {
     </main>
 
     <!-- Bottom Mobile Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 md:hidden">
-      <div class="flex items-center justify-around py-2">
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+      <div class="flex items-center justify-between py-2 sm:justify-around sm:max-w-xl mx-auto">
         <NuxtLink
           v-for="item in navigation"
           :key="item.name"
@@ -130,5 +181,8 @@ function handleApplyFilters(newFilters: Filters) {
       @close="closeFilters"
       @apply-filters="handleApplyFilters"
     />
+
+    <!-- Global Session Modal (for resuming sessions from banner) -->
+    <GlobalSessionModal />
   </div>
 </template>

@@ -19,13 +19,16 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const page = ref(1)
 const totalCount = ref(0)
-const hasMore = ref(true)
+const nextPage = ref<number | null>(null)
 
 // View mode: 'grid' or 'list'
 const viewMode = ref<'grid' | 'list'>('grid')
 
 // Request versioning to handle race conditions
 let currentRequestId = 0
+
+// Computed: check if more results available
+const hasMore = computed(() => nextPage.value !== null)
 
 // Mock data generator
 function generateMockGames(startId: number, count: number): Game[] {
@@ -47,20 +50,38 @@ function generateMockGames(startId: number, count: number): Game[] {
   }))
 }
 
-// Placeholder API call
-async function fetchGames(query: string, filterParams: Filters, pageNum: number): Promise<{ games: Game[], total: number }> {
+// API response type
+interface SearchResponse {
+  games: Game[]
+  totalResults: number
+  nextPage: number | null
+  currentPage: number
+  totalPages: number
+}
+
+// Placeholder API call - structured for PostgreSQL queries
+async function fetchGames(
+  query: string, 
+  filterParams: Filters, 
+  pageNum: number,
+  limit: number = 20
+): Promise<SearchResponse> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500))
   
   // Mock results - fewer results when searching
-  const baseCount = query ? 47 : 1245
-  const perPage = 20
-  const remaining = Math.max(0, baseCount - (pageNum - 1) * perPage)
-  const count = Math.min(perPage, remaining)
+  const totalResults = query ? 47 : 1245
+  const totalPages = Math.ceil(totalResults / limit)
+  const remaining = Math.max(0, totalResults - (pageNum - 1) * limit)
+  const count = Math.min(limit, remaining)
+  const nextPage = pageNum < totalPages ? pageNum + 1 : null
   
   return {
-    games: generateMockGames((pageNum - 1) * perPage, count),
-    total: baseCount
+    games: generateMockGames((pageNum - 1) * limit, count),
+    totalResults,
+    nextPage,
+    currentPage: pageNum,
+    totalPages
   }
 }
 
@@ -72,7 +93,7 @@ async function handleSearch(query: string) {
   loading.value = true
   page.value = 1
   games.value = []
-  hasMore.value = true
+  nextPage.value = null
   
   try {
     const result = await fetchGames(query, filters.value, 1)
@@ -81,8 +102,9 @@ async function handleSearch(query: string) {
     if (requestId !== currentRequestId) return
     
     games.value = result.games
-    totalCount.value = result.total
-    hasMore.value = result.games.length === 20
+    totalCount.value = result.totalResults
+    nextPage.value = result.nextPage
+    page.value = result.currentPage
   } finally {
     // Only update loading state if this is still the current request
     if (requestId === currentRequestId) {
@@ -91,22 +113,22 @@ async function handleSearch(query: string) {
   }
 }
 
-// Load more games
+// Load more games using nextPage
 async function loadMore() {
   if (loadingMore.value || !hasMore.value || loading.value) return
   
   const requestId = currentRequestId
   loadingMore.value = true
-  page.value++
   
   try {
-    const result = await fetchGames(searchQuery.value, filters.value, page.value)
+    const result = await fetchGames(searchQuery.value, filters.value, nextPage.value!)
     
     // Ignore if a new search was started
     if (requestId !== currentRequestId) return
     
     games.value = [...games.value, ...result.games]
-    hasMore.value = result.games.length === 20
+    nextPage.value = result.nextPage
+    page.value = result.currentPage
   } finally {
     if (requestId === currentRequestId) {
       loadingMore.value = false
@@ -119,19 +141,28 @@ watch(filters, () => {
   handleSearch(searchQuery.value)
 }, { deep: true })
 
-// Infinite scroll detection
-const scrollContainer = ref<HTMLElement | null>(null)
-
+// Infinite scroll detection - use window scroll
 function handleScroll() {
-  if (!scrollContainer.value || loading.value || loadingMore.value || !hasMore.value) return
+  if (loading.value || loadingMore.value || !hasMore.value) return
   
-  const { scrollTop, scrollHeight, clientHeight } = scrollContainer.value
-  const threshold = 200
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const scrollHeight = document.documentElement.scrollHeight
+  const clientHeight = window.innerHeight
+  const threshold = 300
   
   if (scrollTop + clientHeight >= scrollHeight - threshold) {
     loadMore()
   }
 }
+
+// Set up scroll listener on mount
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 // Collection and wishlist state (placeholder)
 const collectionIds = ref<string[]>([])
@@ -153,10 +184,6 @@ function handleToggleWishlist(gameId: string) {
   }
 }
 
-function handleLogPlay(gameId: string) {
-  console.log('Log play for game:', gameId)
-}
-
 // Watch for URL query changes
 watch(() => route.query.q, (newQuery) => {
   handleSearch((newQuery as string) || '')
@@ -164,11 +191,7 @@ watch(() => route.query.q, (newQuery) => {
 </script>
 
 <template>
-  <div 
-    ref="scrollContainer" 
-    class="h-full overflow-y-auto"
-    @scroll="handleScroll"
-  >
+  <div>
     <!-- Results section -->
     <div class="p-4">
       <!-- Header with title and view toggle -->
@@ -220,7 +243,6 @@ watch(() => route.query.q, (newQuery) => {
         @add-to-collection="handleAddToCollection"
         @remove-from-collection="handleRemoveFromCollection"
         @toggle-wishlist="handleToggleWishlist"
-        @log-play="handleLogPlay"
       />
 
       <!-- Compact list view -->
@@ -234,7 +256,6 @@ watch(() => route.query.q, (newQuery) => {
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"
-          @log-play="handleLogPlay"
         />
       </div>
 
