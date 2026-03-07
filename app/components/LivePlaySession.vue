@@ -100,6 +100,22 @@ function stopTimer() {
   displaySeconds.value = 0
 }
 
+// Stop warning modal
+const showStopWarning = ref(false)
+
+function handleStopClick() {
+  showStopWarning.value = true
+}
+
+function confirmStop() {
+  stopTimer()
+  showStopWarning.value = false
+}
+
+function cancelStop() {
+  showStopWarning.value = false
+}
+
 // Format time display
 const formattedTime = computed(() => {
   const seconds = displaySeconds.value
@@ -131,29 +147,41 @@ function removePlayer(playerId: string) {
 // Random starting player
 const startingPlayerId = ref<string | null>(null)
 const isSelectingRandom = ref(false)
+const selectionComplete = ref(false)
 
 function selectRandomStartingPlayer() {
   if (players.value.length < 2) {
     startingPlayerId.value = players.value[0]?.id ?? null
+    selectionComplete.value = true
     return
   }
   
-  // Animation effect - cycle through players
+  // Pick which player will be selected at the end
+  const winnerIndex = Math.floor(Math.random() * players.value.length)
+  
+  // Calculate how many iterations to land on the winner
+  // Do 2-3 full cycles plus landing on the winner
+  const fullCycles = 6 + Math.floor(Math.random() * 4)
+  const totalIterations = (fullCycles * players.value.length) + winnerIndex
+  
   isSelectingRandom.value = true
+  selectionComplete.value = false
+  let currentIndex = 0
   let iterations = 0
-  const maxIterations = 10 + Math.floor(Math.random() * 5)
   
   const interval = setInterval(() => {
-    const randomIndex = Math.floor(Math.random() * players.value.length)
-    const player = players.value[randomIndex]
+    const player = players.value[currentIndex]
     if (player) {
       startingPlayerId.value = player.id
     }
-    iterations++
     
-    if (iterations >= maxIterations) {
+    iterations++
+    currentIndex = (currentIndex + 1) % players.value.length
+    
+    if (iterations > totalIterations) {
       clearInterval(interval)
       isSelectingRandom.value = false
+      selectionComplete.value = true
     }
   }, 100)
 }
@@ -247,7 +275,7 @@ function handleCancel() {
           <button
             v-if="isRunning || displaySeconds > 0"
             type="button"
-            @click="stopTimer"
+            @click="handleStopClick"
             class="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
           >
             <Icon name="mdi:stop" class="w-8 h-8" />
@@ -300,10 +328,10 @@ function handleCancel() {
           <div
             v-for="(player, index) in players"
             :key="player.id"
-            class="flex items-center gap-3 px-4 py-3 transition-colors"
+            class="flex items-center gap-3 px-4 py-3 transition-colors duration-150"
             :class="{
-              'bg-indigo-50': startingPlayerId === player.id,
-              'animate-pulse': isSelectingRandom && startingPlayerId === player.id
+              'bg-indigo-50': isSelectingRandom && startingPlayerId === player.id,
+              'slide-in-bg': selectionComplete && startingPlayerId === player.id && !isSelectingRandom
             }"
           >
             <div 
@@ -364,5 +392,82 @@ function handleCancel() {
         Cancel Session
       </button>
     </div>
+
+    <!-- Stop Warning Modal -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div 
+          v-if="showStopWarning" 
+          class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
+          @click.self="cancelStop"
+        >
+          <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100">
+              <Icon name="mdi:alert" class="w-6 h-6 text-red-600" />
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Reset Timer?</h3>
+            <p class="text-gray-600 text-center mb-6">
+              This will reset the timer to zero. Your game progress will be lost.
+            </p>
+            <div class="flex gap-3">
+              <button
+                type="button"
+                @click="cancelStop"
+                class="flex-1 py-3 px-4 rounded-xl font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="confirmStop"
+                class="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-in-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-in-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgb(238 242 255); /* bg-indigo-50 */
+  animation: slideInBg 0.4s ease-out forwards;
+  z-index: 0;
+}
+
+.slide-in-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes slideInBg {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+</style>

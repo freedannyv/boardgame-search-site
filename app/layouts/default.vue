@@ -37,8 +37,7 @@ const navigation = [
   { name: 'Home', icon: 'mdi:home', to: '/' },
   { name: 'Search', icon: 'mdi:magnify', to: '/search' },
   { name: 'Collection', icon: 'mdi:bookshelf', to: '/collection' },
-  { name: 'Wishlist', icon: 'mdi:heart', to: '/wishlist' },
-  { name: 'Profile', icon: 'mdi:account', to: '/profile' }
+  { name: 'Wishlist', icon: 'mdi:heart', to: '/wishlist' }
 ]
 
 function openFilters() {
@@ -152,13 +151,32 @@ function handleApplyFilters(newFilters: Filters) {
       <ActiveSessionBanner />
     </header>
 
+
+    <!-- Desktop/Tablet Navbar -->
+    <nav class="hidden sm:block bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-7xl mx-auto flex items-center gap-2 px-6">
+        <NuxtLink
+          v-for="item in navigation"
+          :key="item.name"
+          :to="item.to"
+          class="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+          :class="$route.path === item.to 
+            ? 'text-indigo-600 bg-indigo-50' 
+            : 'text-gray-600 hover:text-indigo-700 hover:bg-gray-50'"
+        >
+          <Icon :name="item.icon" class="h-5 w-5" />
+          <span>{{ item.name }}</span>
+        </NuxtLink>
+      </div>
+    </nav>
+
     <!-- Main content -->
     <main class="min-h-[calc(100vh-180px)]">
       <slot />
     </main>
 
     <!-- Bottom Mobile Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 sm:hidden">
       <div class="flex items-center justify-between py-2 sm:justify-around sm:max-w-xl mx-auto">
         <NuxtLink
           v-for="item in navigation"

@@ -41,7 +41,7 @@ const winnerId = ref<string | null>(null)
 // Players state
 const players = ref<Player[]>(props.initialPlayers?.map(p => ({ ...p, score: null })) || [])
 const newPlayerName = ref('')
-const showScores = ref(false)
+
 
 // Set initial times based on duration if provided
 onMounted(() => {
@@ -166,13 +166,6 @@ const isValid = computed(() => {
               <h2 class="font-bold text-gray-900">Players</h2>
               <p class="text-sm text-gray-500">{{ players.length }} player{{ players.length !== 1 ? 's' : '' }}</p>
             </div>
-            <button
-              type="button"
-              @click="showScores = !showScores"
-              class="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors"
-            >
-              {{ showScores ? 'Hide Scores' : 'Add Scores' }}
-            </button>
           </div>
         </div>
 
@@ -182,7 +175,7 @@ const isValid = computed(() => {
             <input
               v-model="newPlayerName"
               type="text"
-              placeholder="Enter player name"
+              placeholder="Add player"
               class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
             />
             <button
@@ -220,7 +213,6 @@ const isValid = computed(() => {
               
               <!-- Score input -->
               <input
-                v-if="showScores"
                 v-model.number="player.score"
                 type="number"
                 placeholder="Score"
