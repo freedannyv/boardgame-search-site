@@ -1,0 +1,40 @@
+{
+  "name": "boardgame-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "import:bgg": "tsx server/scripts/importBGG.ts",
+    "import:csv": "tsx scripts/import-boardgames.ts"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "^1.15.2",
+    "@nuxt/icon": "^2.2.1",
+    "@nuxt/image": "^2.0.0",
+    "@nuxtjs/i18n": "^10.2.3",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "@tanstack/vue-query": "^5.92.9",
+    "axios": "^1.13.6",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.3.1",
+    "nuxt": "^4.3.1",
+    "pg": "^8.20.0",
+    "redis": "^5.11.0",
+    "vue": "^3.5.29",
+    "vue-router": "^4.6.4",
+    "xml2js": "^0.6.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.18.0",
+    "@types/xml2js": "^0.4.14",
+    "prisma": "^7.4.2",
+    "tsx": "^4.21.0"
+  }
+}
