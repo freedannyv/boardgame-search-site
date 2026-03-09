@@ -8,8 +8,6 @@ const placeholderGamesStore = usePlaceholderGamesStore()
 
 const recommendedGames = computed(() => placeholderGamesStore.getPlaceholderGames)
 
-// Stores
-const wishlistStore = useWishlistStore()
 const toast = useToastStore()
 
 const popularGames = computed(() => placeholderGamesStore.getPlaceholderGames)
@@ -26,7 +24,6 @@ const categories = [
 
 <template>
   <div class="pb-6">
-    <!-- Collection Snapshot -->
     <CollectionSnapshot />
     
     <GameNightPicker :games="[...recommendedGames, ...popularGames]" />
@@ -64,13 +61,3 @@ const categories = [
     </section>
   </div>
 </template>
-
-<style scoped>
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-</style>

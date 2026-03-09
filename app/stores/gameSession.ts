@@ -116,6 +116,10 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   }
 
   function finishSession(): { players: Player[], elapsedSeconds: number } | null {
+    if (!activeSession.value || activeSession.value.players.length === 0) return null
+
+    const timerMinLimit = getCurrentElapsedSeconds()
+    if (timerMinLimit < 1) return null // TO DO Change to 5 minutes (300)
     if (!activeSession.value) return null
 
     // Calculate final elapsed time

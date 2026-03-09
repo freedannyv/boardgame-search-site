@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGameSessionStore } from '../stores/gameSession'
+import ReviewModal from './review/ReviewModal.vue'
 
 interface Game {
   id: number | string
@@ -20,9 +21,22 @@ const emit = defineEmits<{
   finishGame: [players: Player[], elapsedSeconds: number]
   minimizeSession: []
   cancelSession: []
+  reviewSubmit: [review: any]
 }>()
 
+// Composables
 const sessionStore = useGameSessionStore()
+const { saveReview, getReviewCount } = useReviews()
+
+// Review modal state
+const isReviewModalOpen = ref(false)
+const pendingSessionData = ref<{ players: Player[], elapsedSeconds: number } | null>(null)
+
+// Check if user should see review modal
+const shouldShowReviewModal = computed(() => {
+  const reviewCount = getReviewCount(String(props.game.id))
+  return reviewCount < 3 // Show modal if user has less than 3 reviews
+})
 
 // Local display state (updates every second from store)
 const displaySeconds = ref(0)
@@ -185,8 +199,59 @@ function selectRandomStartingPlayer() {
 function handleFinishGame() {
   const result = sessionStore.finishSession()
   if (result) {
-    emit('finishGame', result.players, result.elapsedSeconds)
+    // Check if user has 3+ reviews
+    const reviewCount = getReviewCount(String(props.game.id))
+    
+    if (reviewCount >= 3) {
+      // User has 3+ reviews, emit finish game directly
+      emit('finishGame', result.players, result.elapsedSeconds)
+      console.log('User has', reviewCount, 'reviews. Session finished without review modal.')
+    } else {
+      // User has <3 reviews, store session data and show review modal
+      pendingSessionData.value = result
+      isReviewModalOpen.value = true
+      console.log('Opening review modal for game:', props.game.name)
+      console.log('User has', reviewCount, 'reviews so far')
+    }
   }
+}
+
+function handleReviewSubmit(review: any) {
+  console.log('Review submitted for live session:', review)
+  
+  // Save the review first
+  saveReview(String(props.game.id), review)
+  
+  // Now emit the finish game event after review is submitted
+  if (pendingSessionData.value) {
+    emit('finishGame', pendingSessionData.value.players, pendingSessionData.value.elapsedSeconds)
+    console.log('Session finished after review submission')
+    pendingSessionData.value = null
+  }
+  
+  // Close review modal
+  isReviewModalOpen.value = false
+  
+  // Optionally navigate to review experience
+  // navigateTo(`/review-experience/${props.game.id}`)
+}
+
+function handleDontReview() {
+  // Finish the session without review
+  if (pendingSessionData.value) {
+    emit('finishGame', pendingSessionData.value.players, pendingSessionData.value.elapsedSeconds)
+    console.log('Session finished without review')
+    pendingSessionData.value = null
+  }
+  
+  // Close review modal
+  isReviewModalOpen.value = false
+}
+
+function handleReviewModalClose() {
+  isReviewModalOpen.value = false
+  // You might want to minimize or close the session after review
+  emit('minimizeSession')
 }
 
 function handleMinimize() {
@@ -425,6 +490,16 @@ function handleCancel() {
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Review Modal -->
+    <ReviewModal
+      :is-open="isReviewModalOpen"
+      :game-id="String(props.game.id)"
+      :game-name="props.game.name"
+      @close="handleReviewModalClose"
+      @submit="handleReviewSubmit"
+      @dont-review="handleDontReview"
+    />
   </div>
 </template>
 

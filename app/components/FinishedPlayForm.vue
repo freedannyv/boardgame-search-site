@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ReviewModal from './review/ReviewModal.vue'
+
 interface Game {
   id: number | string
   name: string
@@ -29,7 +31,22 @@ const props = defineProps<{
 const emit = defineEmits<{
   savePlay: [data: PlayData]
   cancel: []
+  reviewSubmit: [review: any]
 }>()
+
+// Composables
+const { saveReview, getReviewCount } = useReviews()
+
+// Review modal state
+const isReviewModalOpen = ref(false)
+const isSaving = ref(false)
+const pendingPlayData = ref<PlayData | null>(null)
+
+// Check if user should see review modal
+const shouldShowReviewModal = computed(() => {
+  const reviewCount = getReviewCount(String(props.game.id))
+  return reviewCount < 3 // Show modal if user has less than 3 reviews
+})
 
 // Form state
 const today = new Date().toISOString().split('T')[0] as string
@@ -42,19 +59,17 @@ const winnerId = ref<string | null>(null)
 const players = ref<Player[]>(props.initialPlayers?.map(p => ({ ...p, score: null })) || [])
 const newPlayerName = ref('')
 
-
 // Set initial times based on duration if provided
 onMounted(() => {
   const now = new Date()
   endTime.value = formatTimeValue(now)
   
   if (props.initialDuration) {
-    const start = new Date(now.getTime() - props.initialDuration * 1000)
-    startTime.value = formatTimeValue(start)
+    const startDateTime = new Date(now.getTime() - props.initialDuration * 60000)
+    startTime.value = formatTimeValue(startDateTime)
   } else {
-    // Default to 1 hour ago
-    const start = new Date(now.getTime() - 60 * 60 * 1000)
-    startTime.value = formatTimeValue(start)
+    const startDateTime = new Date(now.getTime() - 60000)
+    startTime.value = formatTimeValue(startDateTime)
   }
 })
 
@@ -65,7 +80,7 @@ function formatTimeValue(date: Date): string {
 function addPlayer() {
   if (newPlayerName.value.trim()) {
     players.value.push({
-      id: crypto.randomUUID(),
+      id: Date.now().toString(),
       name: newPlayerName.value.trim(),
       score: null
     })
@@ -80,19 +95,91 @@ function removePlayer(playerId: string) {
   }
 }
 
+function updatePlayerScore(playerId: string, score: string) {
+  const player = players.value.find(p => p.id === playerId)
+  if (player) {
+    player.score = score && score !== '' ? parseInt(score) : null
+  }
+}
+
 function setWinner(playerId: string) {
   winnerId.value = winnerId.value === playerId ? null : playerId
 }
 
-function handleSave() {
-  emit('savePlay', {
-    gameId: props.game.id,
-    date: date.value,
-    startTime: startTime.value,
-    endTime: endTime.value,
-    players: players.value,
-    winnerId: winnerId.value
-  })
+async function handleSave() {
+  if (!isValid.value || players.value.length === 0) return
+  
+  isSaving.value = true
+  
+  try {
+    const playData = {
+      gameId: props.game.id,
+      date: date.value,
+      startTime: startTime.value,
+      endTime: endTime.value,
+      players: players.value,
+      winnerId: winnerId.value
+    }
+    
+    // Check if user has 3+ reviews
+    const reviewCount = getReviewCount(String(props.game.id))
+    
+    if (reviewCount >= 3) {
+      // User has 3+ reviews, just save play without showing modal
+      emit('savePlay', playData)
+      console.log('User has', reviewCount, 'reviews. Saving play directly.')
+    } else {
+      // User has <3 reviews, store play data and show review modal
+      pendingPlayData.value = playData
+      isReviewModalOpen.value = true
+      
+      // Wait for review submission before saving play
+      console.log('Opening review modal for game:', props.game.name)
+      console.log('User has', reviewCount, 'reviews so far')
+    }
+  } catch (error) {
+    console.error('Error saving play:', error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+function handleReviewSubmit(review: any) {
+  console.log('Review submitted:', review)
+  
+  // Save the review first
+  saveReview(String(props.game.id), review)
+  
+  // Now save the play data after review is submitted
+  if (pendingPlayData.value) {
+    emit('savePlay', pendingPlayData.value)
+    console.log('Play saved after review submission')
+    pendingPlayData.value = null
+  }
+  
+  // Close review modal
+  isReviewModalOpen.value = false
+  
+  // Optionally navigate to review experience
+  // navigateTo(`/review-experience/${props.game.id}`)
+}
+
+function handleDontReview() {
+  // Save the play data without review
+  if (pendingPlayData.value) {
+    emit('savePlay', pendingPlayData.value)
+    console.log('Play saved without review')
+    pendingPlayData.value = null
+  }
+  
+  // Close review modal
+  isReviewModalOpen.value = false
+}
+
+function handleReviewModalClose() {
+  isReviewModalOpen.value = false
+  // You might want to emit an event or navigate away after review is closed
+  emit('cancel')
 }
 
 const isValid = computed(() => {
@@ -260,15 +347,38 @@ const isValid = computed(() => {
 
     <!-- Save Button -->
     <div class="px-4 pb-8 pt-4">
+      <!-- Review count indicator -->
+      <div v-if="!shouldShowReviewModal" class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-center gap-2">
+          <Icon name="mdi:information" class="w-5 h-5 text-blue-600" />
+          <p class="text-sm text-blue-800">
+            You've already reviewed this game {{ getReviewCount(String(props.game.id)) }} times. 
+            You can change your last review by clicking here.
+            <!-- TO DO: Add button to open review modal with 3rd review, updatable -->
+          </p>
+        </div>
+      </div>
+      
       <button
         type="button"
         @click="handleSave"
-        :disabled="!isValid"
+        :disabled="!isValid || isSaving"
         class="w-full py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-600/20 disabled:bg-gray-300 disabled:shadow-none"
       >
-        <Icon name="mdi:check" class="w-6 h-6 inline-block mr-2" />
-        Save Play
+        <Icon v-if="isSaving" name="mdi:loading" class="w-6 h-6 inline-block mr-2 animate-spin" />
+        <Icon v-else name="mdi:check" class="w-6 h-6 inline-block mr-2" />
+        {{ isSaving ? 'Saving...' : (shouldShowReviewModal ? 'Log Play' : 'Save Play & Review') }}
       </button>
     </div>
+
+    <!-- Review Modal -->
+    <ReviewModal
+      :is-open="isReviewModalOpen"
+      :game-id="String(props.game.id)"
+      :game-name="props.game.name"
+      @close="handleReviewModalClose"
+      @submit="handleReviewSubmit"
+      @dont-review="handleDontReview"
+    />
   </div>
 </template>
