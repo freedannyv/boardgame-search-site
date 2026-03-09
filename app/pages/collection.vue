@@ -1,16 +1,31 @@
 <script setup lang="ts">
-import type { Game } from '~/components/GameCard.vue'
 import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
+import { useCollectionStore } from '~/stores/useCollectionStore'
+import { usePlaceholderGamesStore } from '~/stores/games'
 
-// Collection games
-const games = ref<Game[]>([])
-const loading = ref(true)
+// Stores
+const collectionStore = useCollectionStore()
+const placeholderGamesStore = usePlaceholderGamesStore()
 
-// Stats
-const stats = ref({
-  total: 0,
-  played: 0,
-  unplayed: 0
+// Collection games from store
+const collectionGames = computed(() => {
+  const gameIds = Array.from(collectionStore.gameIds)
+  return placeholderGamesStore.getPlaceholderGames.filter(game => 
+    gameIds.includes(Number(game.id))
+  )
+})
+
+// Loading state
+const loading = ref(false)
+
+// Stats based on collection
+const stats = computed(() => {
+  const total = collectionGames.value.length
+  return {
+    total,
+    played: Math.floor(total * 0.6), // Placeholder - would come from play history
+    unplayed: Math.ceil(total * 0.4)  // Placeholder - would come from play history
+  }
 })
 
 // Filters
@@ -28,74 +43,30 @@ const sortBy = ref<string>('name')
 // View mode
 const viewMode = ref<'grid' | 'list'>('grid')
 
-// Placeholder API call
-async function fetchCollection(): Promise<{ games: Game[], stats: typeof stats.value }> {
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  const gameNames = [
-    'Gloomhaven', 'Brass: Birmingham', 'Pandemic Legacy', 'Twilight Imperium',
-    'Great Western Trail', 'Viticulture', 'Scythe', 'Root', 'Dune: Imperium',
-    'Lost Ruins of Arnak', 'Clank!', 'Wingspan', 'Everdell', 'Parks'
-  ]
-  
-  const mockGames = gameNames.map((name, i) => ({
-    id: String(i + 1),
-    name,
-    thumbnail: null,
-    average: Math.round((7 + Math.random() * 2) * 10) / 10,
-    minPlayers: Math.floor(Math.random() * 2) + 1,
-    maxPlayers: Math.floor(Math.random() * 4) + 2,
-    playingTime: [30, 45, 60, 90, 120, 180][Math.floor(Math.random() * 6)]
-  }))
-  
-  return {
-    games: mockGames,
-    stats: {
-      total: mockGames.length,
-      played: Math.floor(mockGames.length * 0.6),
-      unplayed: Math.ceil(mockGames.length * 0.4)
-    }
-  }
-}
-
-// Load collection
-async function loadCollection() {
-  loading.value = true
-  try {
-    const result = await fetchCollection()
-    games.value = result.games
-    stats.value = result.stats
-  } finally {
-    loading.value = false
-  }
-}
-
-// Wishlist tracking
-const wishlistIds = ref<string[]>([])
-
+// Handle remove from collection
 function handleRemoveFromCollection(gameId: string) {
-  games.value = games.value.filter(g => g.id !== gameId)
-  stats.value.total = games.value.length
-}
-
-function handleToggleWishlist(gameId: string) {
-  if (wishlistIds.value.includes(gameId)) {
-    wishlistIds.value = wishlistIds.value.filter(id => id !== gameId)
-  } else {
-    wishlistIds.value.push(gameId)
-  }
+  collectionStore.removeGame(Number(gameId))
 }
 
 // Handle filter changes from component
 function handleFiltersChanged(newFilters: CollectionFiltersType) {
   filters.value = newFilters
-  loadCollection()
+  // TODO: Apply filters to collectionGames
 }
 
 // Handle sort changes
 function handleSortChanged(newSortBy: string) {
   sortBy.value = newSortBy
-  loadCollection()
+  // TODO: Apply sorting to collectionGames
+}
+
+// Load collection (reactive - no async needed)
+function loadCollection() {
+  loading.value = true
+  // Collection data is now reactive from stores
+  setTimeout(() => {
+    loading.value = false
+  }, 300) // Brief loading state for UX
 }
 
 onMounted(() => {
@@ -177,24 +148,16 @@ onMounted(() => {
 
       <!-- Grid view -->
       <GameGrid
-        v-else-if="games.length > 0 && viewMode === 'grid'"
-        :games="games"
-        :collection-ids="games.map(g => g.id)"
-        :wishlist-ids="wishlistIds"
-        @remove-from-collection="handleRemoveFromCollection"
-        @toggle-wishlist="handleToggleWishlist"
+        v-else-if="collectionGames?.length > 0 && viewMode === 'grid'"
+        :games="collectionGames"
       />
 
       <!-- List view -->
-      <div v-else-if="games.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
+      <div v-else-if="collectionGames?.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
         <CompactGameRow
-          v-for="game in games"
+          v-for="game in collectionGames"
           :key="game.id"
           :game="game"
-          :is-in-collection="true"
-          :is-in-wishlist="wishlistIds.includes(game.id)"
-          @remove-from-collection="handleRemoveFromCollection"
-          @toggle-wishlist="handleToggleWishlist"
         />
       </div>
 

@@ -3,22 +3,32 @@ import type { Game } from '~/components/GameCard.vue'
 import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
 import { useCollectionStore } from '~/stores/useCollectionStore'
 import { useWishlistStore } from '~/stores/useWishlistStore'
-import { useGameActions } from '~/composables/useGameActions'
+import { usePlaceholderGamesStore } from '~/stores/games'
 
 // Stores
 const collectionStore = useCollectionStore()
 const wishlistStore = useWishlistStore()
-const { toggleCollection, toggleWishlist } = useGameActions()
+const placeholderGamesStore = usePlaceholderGamesStore()
 
-// Wishlist games
-const games = ref<Game[]>([])
-const loading = ref(true)
+// Wishlist games from store
+const wishlistGames = computed(() => {
+  const gameIds = Array.from(wishlistStore.gameIds)
+  return placeholderGamesStore.getPlaceholderGames.filter(game => 
+    gameIds.includes(Number(game.id))
+  )
+})
 
-// Stats
-const stats = ref({
-  total: 0,
-  highPriority: 0,
-  recentlyAdded: 0
+// Loading state
+const loading = ref(false)
+
+// Stats based on wishlist
+const stats = computed(() => {
+  const total = wishlistGames.value.length
+  return {
+    total,
+    highPriority: Math.floor(total * 0.3), // Placeholder - would come from priority system
+    recentlyAdded: Math.floor(total * 0.25)  // Placeholder - would come from timestamps
+  }
 })
 
 // Filters
@@ -36,76 +46,25 @@ const sortBy = ref<string>('name')
 // View mode
 const viewMode = ref<'grid' | 'list'>('grid')
 
-// Placeholder API call
-async function fetchWishlist(): Promise<{ games: Game[], stats: typeof stats.value }> {
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  const gameNames = [
-    'Ark Nova', 'Terraforming Mars', 'Spirit Island', 'Concordia',
-    'Agricola', 'Puerto Rico', 'El Grande', 'Ticket to Ride'
-  ]
-  
-  const mockGames = gameNames.map((name, i) => ({
-    id: String(100 + i),
-    name,
-    thumbnail: null,
-    average: Math.round((7 + Math.random() * 2) * 10) / 10,
-    minPlayers: Math.floor(Math.random() * 2) + 1,
-    maxPlayers: Math.floor(Math.random() * 4) + 2,
-    playingTime: [30, 45, 60, 90, 120, 180][Math.floor(Math.random() * 6)]
-  }))
-  
-  return {
-    games: mockGames,
-    stats: {
-      total: mockGames.length,
-      highPriority: Math.floor(mockGames.length * 0.3),
-      recentlyAdded: Math.floor(mockGames.length * 0.25)
-    }
-  }
-}
-
-// Load wishlist
-async function loadWishlist() {
-  loading.value = true
-  try {
-    const result = await fetchWishlist()
-    games.value = result.games
-    stats.value = result.stats
-  } finally {
-    loading.value = false
-  }
-}
-
-// Helper functions for collection/wishlist state
-function isInCollection(gameId: string) {
-  return collectionStore.isOwned(Number(gameId))
-}
-
-function handleAddToCollection(gameId: string) {
-  toggleCollection(Number(gameId))
-  // Remove from wishlist when added to collection
-  toggleWishlist(Number(gameId))
-  games.value = games.value.filter(g => g.id !== gameId)
-  stats.value.total = games.value.length
-}
-
-function handleRemoveFromWishlist(gameId: string) {
-  toggleWishlist(Number(gameId))
-  games.value = games.value.filter(g => g.id !== gameId)
-  stats.value.total = games.value.length
-}
-
 // Handle filter changes from component
 function handleFiltersChanged(newFilters: CollectionFiltersType) {
   filters.value = newFilters
-  loadWishlist()
+  // TODO: Apply filters to wishlistGames
 }
 
 // Handle sort changes
 function handleSortChanged(newSortBy: string) {
   sortBy.value = newSortBy
-  loadWishlist()
+  // TODO: Apply sorting to wishlistGames
+}
+
+// Load wishlist (reactive - no async needed)
+function loadWishlist() {
+  loading.value = true
+  // Wishlist data is now reactive from stores
+  setTimeout(() => {
+    loading.value = false
+  }, 300) // Brief loading state for UX
 }
 
 onMounted(() => {
@@ -187,22 +146,16 @@ onMounted(() => {
 
       <!-- Grid view -->
       <GameGrid
-        v-else-if="games.length > 0 && viewMode === 'grid'"
-        :games="games"
-        @add-to-collection="handleAddToCollection"
-        @toggle-wishlist="handleRemoveFromWishlist"
+        v-else-if="wishlistGames.length > 0 && viewMode === 'grid'"
+        :games="wishlistGames"
       />
 
       <!-- List view -->
-      <div v-else-if="games.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
+      <div v-else-if="wishlistGames.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
         <CompactGameRow
-          v-for="game in games"
+          v-for="game in wishlistGames"
           :key="game.id"
           :game="game"
-          :is-in-collection="isInCollection(game.id)"
-          :is-in-wishlist="true"
-          @add-to-collection="handleAddToCollection"
-          @toggle-wishlist="handleRemoveFromWishlist"
         />
       </div>
 

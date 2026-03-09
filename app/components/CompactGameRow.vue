@@ -2,6 +2,8 @@
 import { useCollectionStore } from '../stores/useCollectionStore'
 import { useWishlistStore } from '../stores/useWishlistStore'
 import { useGameActions } from '../composables/useGameActions'
+import CollectionButton from './buttons/CollectionButton.vue'
+import WishlistButton from './buttons/WishlistButton.vue'
 
 export interface Game {
   id: string
@@ -99,28 +101,8 @@ function handleWishlistClick() {
     <!-- Action Buttons -->
     <div class="flex items-center gap-1 flex-shrink-0">
       <!-- Collection toggle -->
-      <button
-        @click.stop="handleCollectionClick"
-        class="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
-        :class="isInCollection 
-          ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100' 
-          : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'"
-        :title="isInCollection ? 'Remove from collection' : 'Add to collection'"
-      >
-        <Icon :name="isInCollection ? 'mdi:bookmark-check' : 'mdi:bookmark-plus-outline'" class="w-5 h-5" />
-      </button>
-
-      <!-- Wishlist toggle -->
-      <button
-        @click.stop="handleWishlistClick"
-        class="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
-        :class="isInWishlist 
-          ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' 
-          : 'text-gray-400 hover:text-rose-500 hover:bg-gray-100'"
-        :title="isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'"
-      >
-        <Icon :name="isInWishlist ? 'mdi:heart' : 'mdi:heart-outline'" class="w-5 h-5" />
-      </button>
+      <CollectionButton :gameId="Number(game.id)" />
+      <WishlistButton :gameId="Number(game.id)" />
 
       <!-- Log play -->
       <LogPlayButton :game="game" variant="compact" />
