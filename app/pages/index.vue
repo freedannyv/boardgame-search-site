@@ -1,26 +1,27 @@
 <script setup lang="ts">
+
 import type { Game } from '~/components/GameCard.vue'
+import { useToastStore } from '~/stores/toast'
+import { useCollectionStore } from '~/stores/useCollectionStore'
+import { useWishlistStore } from '~/stores/useWishlistStore'
+import { useGameActions } from '~/composables/useGameActions'
 
-// Placeholder data
-const collectionCount = ref(0) // Set to 0 to show empty state, or higher to show count
+// Stores
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
+const toast = useToastStore()
 
-const recommendedGames = ref<Game[]>([
-  { id: '1', name: 'Wingspan', thumbnail: null, average: 8.1, minPlayers: 1, maxPlayers: 5, playingTime: 70 },
-  { id: '2', name: 'Everdell', thumbnail: null, average: 8.0, minPlayers: 1, maxPlayers: 4, playingTime: 80 },
-  { id: '3', name: 'Ark Nova', thumbnail: null, average: 8.5, minPlayers: 1, maxPlayers: 4, playingTime: 150 },
-  { id: '4', name: 'Cascadia', thumbnail: null, average: 8.0, minPlayers: 1, maxPlayers: 4, playingTime: 45 },
-  { id: '5', name: 'Terraforming Mars', thumbnail: null, average: 8.4, minPlayers: 1, maxPlayers: 5, playingTime: 120 },
-  { id: '6', name: 'Spirit Island', thumbnail: null, average: 8.3, minPlayers: 1, maxPlayers: 4, playingTime: 120 },
-])
+// Collection count from store
+const collectionCount = computed(() => collectionStore.gameIds.size)
 
-const popularGames = ref<Game[]>([
-  { id: '7', name: 'Catan', thumbnail: null, average: 7.2, minPlayers: 3, maxPlayers: 4, playingTime: 90 },
-  { id: '8', name: 'Ticket to Ride', thumbnail: null, average: 7.5, minPlayers: 2, maxPlayers: 5, playingTime: 60 },
-  { id: '9', name: 'Pandemic', thumbnail: null, average: 7.6, minPlayers: 2, maxPlayers: 4, playingTime: 45 },
-  { id: '10', name: 'Azul', thumbnail: null, average: 7.8, minPlayers: 2, maxPlayers: 4, playingTime: 45 },
-  { id: '11', name: '7 Wonders', thumbnail: null, average: 7.7, minPlayers: 2, maxPlayers: 7, playingTime: 30 },
-  { id: '12', name: 'Codenames', thumbnail: null, average: 7.6, minPlayers: 2, maxPlayers: 8, playingTime: 15 },
-])
+
+// Get recommended games from store
+import { usePlaceholderGamesStore } from '~/stores/games'
+const placeholderGamesStore = usePlaceholderGamesStore()
+
+const recommendedGames = computed(() => placeholderGamesStore.getPlaceholderGames)
+const popularGames = computed(() => placeholderGamesStore.getPlaceholderGames.reverse())
 
 const categories = [
   { name: 'Strategy', icon: 'mdi:chess-knight', slug: 'strategy' },
@@ -31,28 +32,38 @@ const categories = [
   { name: 'Abstract', icon: 'mdi:shape', slug: 'abstract' },
 ]
 
-const collectionIds = ref<string[]>([])
-const wishlistIds = ref<string[]>([])
-
 // Expand states for sections
 const showAllRecommended = ref(false)
 const showAllPopular = ref(false)
 
+// Helper functions for collection/wishlist state
+function isInCollection(gameId: string) {
+  return collectionStore.isOwned(Number(gameId))
+}
+
+function isInWishlist(gameId: string) {
+  return wishlistStore.isWishlisted(Number(gameId))
+}
+
 function handleAddToCollection(gameId: string) {
-  collectionIds.value.push(gameId)
-  collectionCount.value++
+  toggleCollection(Number(gameId))
+  // Find the game name
+  const game = [...recommendedGames.value, ...popularGames.value].find(g => g.id === gameId)
+  if (game) {
+    toast.show(`${game.name} added to your collection!`, 'success')
+  }
 }
 
 function handleRemoveFromCollection(gameId: string) {
-  collectionIds.value = collectionIds.value.filter(id => id !== gameId)
-  collectionCount.value = Math.max(0, collectionCount.value - 1)
+  toggleCollection(Number(gameId))
 }
 
 function handleToggleWishlist(gameId: string) {
-  if (wishlistIds.value.includes(gameId)) {
-    wishlistIds.value = wishlistIds.value.filter(id => id !== gameId)
-  } else {
-    wishlistIds.value.push(gameId)
+  toggleWishlist(Number(gameId))
+  // Find the game name
+  const game = [...recommendedGames.value, ...popularGames.value].find(g => g.id === gameId)
+  if (game) {
+    toast.show(`${game.name} added to your wishlist!`, 'success')
   }
 }
 </script>
@@ -103,8 +114,6 @@ function handleToggleWishlist(gameId: string) {
       <div v-if="showAllRecommended" class="px-4">
         <GameGrid
           :games="recommendedGames"
-          :collection-ids="collectionIds"
-          :wishlist-ids="wishlistIds"
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"
@@ -117,8 +126,8 @@ function handleToggleWishlist(gameId: string) {
           <div v-for="game in recommendedGames" :key="game.id" class="flex-shrink-0 w-36">
             <GameCard
               :game="game"
-              :is-in-collection="collectionIds.includes(game.id)"
-              :is-in-wishlist="wishlistIds.includes(game.id)"
+              :is-in-collection="isInCollection(game.id)"
+              :is-in-wishlist="isInWishlist(game.id)"
               @add-to-collection="handleAddToCollection"
               @remove-from-collection="handleRemoveFromCollection"
               @toggle-wishlist="handleToggleWishlist"
@@ -145,8 +154,6 @@ function handleToggleWishlist(gameId: string) {
       <div v-if="showAllPopular" class="px-4">
         <GameGrid
           :games="popularGames"
-          :collection-ids="collectionIds"
-          :wishlist-ids="wishlistIds"
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"
@@ -159,8 +166,8 @@ function handleToggleWishlist(gameId: string) {
           <div v-for="game in popularGames" :key="game.id" class="flex-shrink-0 w-36">
             <GameCard
               :game="game"
-              :is-in-collection="collectionIds.includes(game.id)"
-              :is-in-wishlist="wishlistIds.includes(game.id)"
+              :is-in-collection="isInCollection(game.id)"
+              :is-in-wishlist="isInWishlist(game.id)"
               @add-to-collection="handleAddToCollection"
               @remove-from-collection="handleRemoveFromCollection"
               @toggle-wishlist="handleToggleWishlist"

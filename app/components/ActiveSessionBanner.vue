@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useGameSessionStore } from '~/stores/gameSession'
+import { useGameSessionStore } from '../stores/gameSession'
 
 const sessionStore = useGameSessionStore()
 const { activeSession, hasActiveSession } = storeToRefs(sessionStore)
@@ -22,7 +22,7 @@ function updateDisplay() {
 function startDisplayTimer() {
   stopDisplayTimer()
   updateDisplay()
-  intervalId = setInterval(updateDisplay, 1000)
+  // setInterval will now be started in onMounted only
 }
 
 function stopDisplayTimer() {
@@ -33,17 +33,23 @@ function stopDisplayTimer() {
 }
 
 // Watch for session changes
-watch(
-  hasActiveSession,
-  (hasSession) => {
-    if (hasSession) {
-      startDisplayTimer()
-    } else {
-      stopDisplayTimer()
-    }
-  },
-  { immediate: true }
-)
+
+onMounted(() => {
+  watch(
+    hasActiveSession,
+    (hasSession) => {
+      if (hasSession) {
+        startDisplayTimer()
+        if (process.client) {
+          intervalId = setInterval(updateDisplay, 1000)
+        }
+      } else {
+        stopDisplayTimer()
+      }
+    },
+    { immediate: true }
+  )
+})
 
 onUnmounted(() => {
   stopDisplayTimer()

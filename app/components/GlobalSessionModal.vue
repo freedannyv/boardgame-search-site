@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useGameSessionStore } from '~/stores/gameSession'
+import { useGameSessionStore } from '../stores/gameSession'
 
 interface Player {
   id: string

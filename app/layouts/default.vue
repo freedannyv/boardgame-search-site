@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Filters } from '~/components/FilterDrawer.vue'
 import type { SearchResult } from '~/components/SearchBar.vue'
+import GlobalToast from '~/components/GlobalToast.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,7 +38,8 @@ const navigation = [
   { name: 'Home', icon: 'mdi:home', to: '/' },
   { name: 'Search', icon: 'mdi:magnify', to: '/search' },
   { name: 'Collection', icon: 'mdi:bookshelf', to: '/collection' },
-  { name: 'Wishlist', icon: 'mdi:heart', to: '/wishlist' }
+  { name: 'Wishlist', icon: 'mdi:heart', to: '/wishlist' },
+  { name: 'Friends', icon: 'mdi:account-group', to: '/friends' }
 ]
 
 function openFilters() {
@@ -106,7 +108,7 @@ function handleApplyFilters(newFilters: Filters) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 pb-16 md:pb-0">
+  <div class="min-h-screen bg-gray-50 pb-16 md:pb-0 max-w-7xl mx-auto">
     <!-- Sticky Header -->
     <header class="sticky top-0 z-40 bg-white shadow-sm">
       <!-- Top bar -->
@@ -202,5 +204,8 @@ function handleApplyFilters(newFilters: Filters) {
 
     <!-- Global Session Modal (for resuming sessions from banner) -->
     <GlobalSessionModal />
+
+    <!-- Global Toast Notification -->
+    <GlobalToast />
   </div>
 </template>

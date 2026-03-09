@@ -3,8 +3,6 @@ import type { Game } from './GameCard.vue'
 
 defineProps<{
   games: Game[]
-  collectionIds?: string[]
-  wishlistIds?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -20,8 +18,6 @@ const emit = defineEmits<{
       v-for="game in games"
       :key="game.id"
       :game="game"
-      :is-in-collection="collectionIds?.includes(game.id)"
-      :is-in-wishlist="wishlistIds?.includes(game.id)"
       @add-to-collection="emit('addToCollection', $event)"
       @remove-from-collection="emit('removeFromCollection', $event)"
       @toggle-wishlist="emit('toggleWishlist', $event)"

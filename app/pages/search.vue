@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { Game } from '~/components/GameCard.vue'
 import type { Filters } from '~/components/FilterDrawer.vue'
+import { useCollectionStore } from '../stores/useCollectionStore'
+import { useWishlistStore } from '../stores/useWishlistStore'
+import { useGameActions } from '~/composables/useGameActions'
 
 const route = useRoute()
 
@@ -13,6 +16,11 @@ const filters = inject<Ref<Filters>>('searchFilters', ref({
   playTime: null,
   minRating: 0
 }))
+
+// Stores
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
 
 const games = ref<Game[]>([])
 const loading = ref(false)
@@ -164,24 +172,25 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// Collection and wishlist state (placeholder)
-const collectionIds = ref<string[]>([])
-const wishlistIds = ref<string[]>([])
+// Helper functions for collection/wishlist state
+function isInCollection(gameId: string) {
+  return collectionStore.isOwned(Number(gameId))
+}
+
+function isInWishlist(gameId: string) {
+  return wishlistStore.isWishlisted(Number(gameId))
+}
 
 function handleAddToCollection(gameId: string) {
-  collectionIds.value.push(gameId)
+  toggleCollection(Number(gameId))
 }
 
 function handleRemoveFromCollection(gameId: string) {
-  collectionIds.value = collectionIds.value.filter(id => id !== gameId)
+  toggleCollection(Number(gameId))
 }
 
 function handleToggleWishlist(gameId: string) {
-  if (wishlistIds.value.includes(gameId)) {
-    wishlistIds.value = wishlistIds.value.filter(id => id !== gameId)
-  } else {
-    wishlistIds.value.push(gameId)
-  }
+  toggleWishlist(Number(gameId))
 }
 
 // Watch for URL query changes
@@ -238,8 +247,6 @@ watch(() => route.query.q, (newQuery) => {
       <GameGrid
         v-else-if="games.length > 0 && viewMode === 'grid'"
         :games="games"
-        :collection-ids="collectionIds"
-        :wishlist-ids="wishlistIds"
         @add-to-collection="handleAddToCollection"
         @remove-from-collection="handleRemoveFromCollection"
         @toggle-wishlist="handleToggleWishlist"
@@ -251,8 +258,8 @@ watch(() => route.query.q, (newQuery) => {
           v-for="game in games"
           :key="game.id"
           :game="game"
-          :is-in-collection="collectionIds.includes(game.id)"
-          :is-in-wishlist="wishlistIds.includes(game.id)"
+          :is-in-collection="isInCollection(game.id)"
+          :is-in-wishlist="isInWishlist(game.id)"
           @add-to-collection="handleAddToCollection"
           @remove-from-collection="handleRemoveFromCollection"
           @toggle-wishlist="handleToggleWishlist"

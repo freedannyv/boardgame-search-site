@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import type { Game } from '~/components/GameCard.vue'
 import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
+import { useCollectionStore } from '~/stores/useCollectionStore'
+import { useWishlistStore } from '~/stores/useWishlistStore'
+import { useGameActions } from '~/composables/useGameActions'
+
+// Stores
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
 
 // Wishlist games
 const games = ref<Game[]>([])
@@ -69,17 +77,21 @@ async function loadWishlist() {
   }
 }
 
-// Collection tracking
-const collectionIds = ref<string[]>([])
+// Helper functions for collection/wishlist state
+function isInCollection(gameId: string) {
+  return collectionStore.isOwned(Number(gameId))
+}
 
 function handleAddToCollection(gameId: string) {
-  collectionIds.value.push(gameId)
+  toggleCollection(Number(gameId))
   // Remove from wishlist when added to collection
+  toggleWishlist(Number(gameId))
   games.value = games.value.filter(g => g.id !== gameId)
   stats.value.total = games.value.length
 }
 
 function handleRemoveFromWishlist(gameId: string) {
+  toggleWishlist(Number(gameId))
   games.value = games.value.filter(g => g.id !== gameId)
   stats.value.total = games.value.length
 }
@@ -177,8 +189,6 @@ onMounted(() => {
       <GameGrid
         v-else-if="games.length > 0 && viewMode === 'grid'"
         :games="games"
-        :collection-ids="collectionIds"
-        :wishlist-ids="games.map(g => g.id)"
         @add-to-collection="handleAddToCollection"
         @toggle-wishlist="handleRemoveFromWishlist"
       />
@@ -189,7 +199,7 @@ onMounted(() => {
           v-for="game in games"
           :key="game.id"
           :game="game"
-          :is-in-collection="collectionIds.includes(game.id)"
+          :is-in-collection="isInCollection(game.id)"
           :is-in-wishlist="true"
           @add-to-collection="handleAddToCollection"
           @toggle-wishlist="handleRemoveFromWishlist"

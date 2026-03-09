@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGameSessionStore } from '~/stores/gameSession'
+import { useGameSessionStore } from '../stores/gameSession'
 
 interface Game {
   id: number | string
@@ -50,6 +50,7 @@ function updateDisplay() {
 
 // Start the display update interval
 function startDisplayTimer() {
+  if (!process.client) return
   if (timerInterval.value) return
   timerInterval.value = setInterval(updateDisplay, 1000)
 }
@@ -150,34 +151,29 @@ const isSelectingRandom = ref(false)
 const selectionComplete = ref(false)
 
 function selectRandomStartingPlayer() {
+  if (!process.client) return
   if (players.value.length < 2) {
     startingPlayerId.value = players.value[0]?.id ?? null
     selectionComplete.value = true
     return
   }
-  
   // Pick which player will be selected at the end
   const winnerIndex = Math.floor(Math.random() * players.value.length)
-  
   // Calculate how many iterations to land on the winner
-  // Do 2-3 full cycles plus landing on the winner
+  // Do 6-10 full cycles plus landing on the winner
   const fullCycles = 6 + Math.floor(Math.random() * 4)
   const totalIterations = (fullCycles * players.value.length) + winnerIndex
-  
   isSelectingRandom.value = true
   selectionComplete.value = false
   let currentIndex = 0
   let iterations = 0
-  
   const interval = setInterval(() => {
     const player = players.value[currentIndex]
     if (player) {
       startingPlayerId.value = player.id
     }
-    
     iterations++
     currentIndex = (currentIndex + 1) % players.value.length
-    
     if (iterations > totalIterations) {
       clearInterval(interval)
       isSelectingRandom.value = false

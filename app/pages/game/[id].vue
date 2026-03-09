@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { Game } from '~/components/GameCard.vue'
+import { useCollectionStore } from '~/stores/useCollectionStore'
+import { useWishlistStore } from '~/stores/useWishlistStore'
+import { useGameActions } from '~/composables/useGameActions'
 
 interface GameDetail extends Game {
   description?: string | null
@@ -12,12 +15,15 @@ interface GameDetail extends Game {
 const route = useRoute()
 const gameId = computed(() => route.params.id as string)
 
+// Stores
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
+
 // Reactive state
 const game = ref<GameDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const isInCollection = ref(false)
-const isInWishlist = ref(false)
 
 // Recommended games
 const recommendedGames = ref<Game[]>([
@@ -83,30 +89,45 @@ async function loadGame() {
   }
 }
 
+// Computed properties for store state
+const isInCollection = computed(() => {
+  return game.value ? collectionStore.isOwned(Number(game.value.id)) : false
+})
+
+const isInWishlist = computed(() => {
+  return game.value ? wishlistStore.isWishlisted(Number(game.value.id)) : false
+})
+
 // Action handlers
 function handleAddToCollection() {
-  isInCollection.value = true
+  if (game.value) {
+    toggleCollection(Number(game.value.id))
+  }
 }
 
 function handleRemoveFromCollection() {
-  isInCollection.value = false
+  if (game.value) {
+    toggleCollection(Number(game.value.id))
+  }
 }
 
 function handleToggleWishlist() {
-  isInWishlist.value = !isInWishlist.value
+  if (game.value) {
+    toggleWishlist(Number(game.value.id))
+  }
 }
 
 // Recommended game handlers
 function handleRecommendedAddToCollection(id: string) {
-  console.log('Add to collection:', id)
+  toggleCollection(Number(id))
 }
 
 function handleRecommendedRemoveFromCollection(id: string) {
-  console.log('Remove from collection:', id)
+  toggleCollection(Number(id))
 }
 
 function handleRecommendedToggleWishlist(id: string) {
-  console.log('Toggle wishlist:', id)
+  toggleWishlist(Number(id))
 }
 
 // Format game data for GameHeader

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useCollectionStore } from '../stores/useCollectionStore'
+import { useWishlistStore } from '../stores/useWishlistStore'
+import { useGameActions } from '../composables/useGameActions'
+
 export interface Game {
   id: string
   name: string
@@ -12,15 +16,11 @@ export interface Game {
 
 const props = defineProps<{
   game: Game
-  isInCollection?: boolean
-  isInWishlist?: boolean
 }>()
 
-const emit = defineEmits<{
-  'addToCollection': [gameId: string]
-  'removeFromCollection': [gameId: string]
-  'toggleWishlist': [gameId: string]
-}>()
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
 
 const hasImage = computed(() => {
   return !!(props.game.image || props.game.thumbnail)
@@ -54,16 +54,24 @@ const playtime = computed(() => {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
 })
 
+const isInCollection = computed(() => {
+  return collectionStore.isOwned(Number(props.game.id))
+})
+
+const isInWishlist = computed(() => {
+  return wishlistStore.isWishlisted(Number(props.game.id))
+})
+
 function handleAddToCollection() {
-  emit('addToCollection', props.game.id)
+  toggleCollection(Number(props.game.id))
 }
 
 function handleRemoveFromCollection() {
-  emit('removeFromCollection', props.game.id)
+  toggleCollection(Number(props.game.id))
 }
 
 function handleToggleWishlist() {
-  emit('toggleWishlist', props.game.id)
+  toggleWishlist(Number(props.game.id))
 }
 </script>
 

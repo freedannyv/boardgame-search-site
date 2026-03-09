@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGameSessionStore } from '~/stores/gameSession'
+import { useGameSessionStore } from '../stores/gameSession'
 
 interface Game {
   id: string | number

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useCollectionStore } from '../stores/useCollectionStore'
+import { useWishlistStore } from '../stores/useWishlistStore'
+import { useGameActions } from '../composables/useGameActions'
+
 export interface Game {
   id: string
   name: string
@@ -12,15 +16,11 @@ export interface Game {
 
 const props = defineProps<{
   game: Game
-  isInCollection?: boolean
-  isInWishlist?: boolean
 }>()
 
-const emit = defineEmits<{
-  'addToCollection': [gameId: string]
-  'removeFromCollection': [gameId: string]
-  'toggleWishlist': [gameId: string]
-}>()
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
+const { toggleCollection, toggleWishlist } = useGameActions()
 
 const imageUrl = computed(() => props.game.thumbnail || props.game.image)
 
@@ -41,12 +41,20 @@ const playTime = computed(() => {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
 })
 
+const isInCollection = computed(() => {
+  return collectionStore.isOwned(Number(props.game.id))
+})
+
+const isInWishlist = computed(() => {
+  return wishlistStore.isWishlisted(Number(props.game.id))
+})
+
 function handleCollectionClick() {
-  if (props.isInCollection) {
-    emit('removeFromCollection', props.game.id)
-  } else {
-    emit('addToCollection', props.game.id)
-  }
+  toggleCollection(Number(props.game.id))
+}
+
+function handleWishlistClick() {
+  toggleWishlist(Number(props.game.id))
 }
 </script>
 
@@ -104,7 +112,7 @@ function handleCollectionClick() {
 
       <!-- Wishlist toggle -->
       <button
-        @click.stop="emit('toggleWishlist', game.id)"
+        @click.stop="handleWishlistClick"
         class="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
         :class="isInWishlist 
           ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' 
