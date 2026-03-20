@@ -6,6 +6,9 @@ import CollectionSnapshot from '~/components/collection/CollectionSnapshot.vue'
 import { usePlaceholderGamesStore } from '~/stores/games'
 const placeholderGamesStore = usePlaceholderGamesStore()
 
+// Import BGG API composable
+import { useBggApi } from '~/composables/useBggApi'
+
 const recommendedGames = computed(() => placeholderGamesStore.getPlaceholderGames)
 
 const toast = useToastStore()
@@ -24,22 +27,16 @@ const categories = [
 // Handle fetch button click with BGG API call
 const handleGameFetch = async () => {
   try {
+    const { searchItems } = useBggApi()
     
-    const config = useRuntimeConfig()
-    const token = config.public.BGG_API_TOKEN
-     
-    const response = await $fetch('https://boardgamegeek.com/xmlapi2/search?query=obsession', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/xml',
-        'Authorization': `Bearer ${token}`
-      }
+    const response = await searchItems({
+      query: 'obsession',
+      type: 'boardgame'
     })
     
     console.log('BGG API Response:', response)
   } catch (error) {
     console.error('BGG API Error:', error)
-    console.error('Error status:', error?.status || error?.statusCode)
     toast.show('Failed to fetch games', 'error')
   }
 }
