@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGameSessionStore } from '../stores/gameSession'
+import FullScreenModal from './FullScreenModal.vue'
 
 interface Game {
   id: string | number
@@ -148,13 +149,44 @@ const shouldShowButton = computed(() => {
   </button>
 
   <!-- Play Log Modal -->
-  <PlayLogModal
-    v-if="currentView === 'modal'"
-    :game="{ id: Number(game.id), name: game.name, thumbnail: game.thumbnail || undefined }"
-    @start-game="handleStartGame"
-    @log-finished-game="handleLogFinishedGame"
+  <BaseModal
+    :show="currentView === 'modal'"
+    :close-on-overlay-click="false"
+    max-width="md"
     @close="currentView = 'none'"
-  />
+  >
+    <div class="text-center">
+      <div v-if="game.thumbnail" class="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-xl">
+        <img
+          :src="game.thumbnail"
+          :alt="game.name"
+          class="h-full w-full object-cover"
+        />
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Log a Play</h2>
+      <p class="mt-1 text-sm text-gray-500">{{ game.name }}</p>
+
+      <div class="mt-6 space-y-3">
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-3 rounded-xl bg-green-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-green-700 active:scale-[0.98]"
+          @click="handleStartGame"
+        >
+          <Icon name="mdi:play-circle" class="h-6 w-6" />
+          Start Game Now
+        </button>
+
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-3 rounded-xl bg-indigo-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.98]"
+          @click="handleLogFinishedGame"
+        >
+          <Icon name="mdi:check-circle" class="h-6 w-6" />
+          Already Finished
+        </button>
+      </div>
+    </div>
+  </BaseModal>
 
   <!-- Live Play Session -->
   <Teleport to="body">
@@ -171,20 +203,20 @@ const shouldShowButton = computed(() => {
   </Teleport>
 
   <!-- Finished Play Form -->
-  <Teleport to="body">
-    <div v-if="currentView === 'form'" class="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
-      <div class="min-h-screen py-4">
-        <FinishedPlayForm
-          :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
-          :initial-players="sessionPlayers"
-          :initial-duration="sessionDuration"
-          :expansions="expansions"
-          @save-play="handleSavePlay"
-          @cancel="handleCancelForm"
-        />
-      </div>
-    </div>
-  </Teleport>
+  <FullScreenModal
+    :show="currentView === 'form'"
+    :title="`Log Play - ${game.name}`"
+    @close="handleCancelForm"
+  >
+    <FinishedPlayForm
+      :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
+      :initial-players="sessionPlayers"
+      :initial-duration="sessionDuration"
+      :expansions="expansions"
+      @save-play="handleSavePlay"
+      @cancel="handleCancelForm"
+    />
+  </FullScreenModal>
 </template>
 
 <style scoped>

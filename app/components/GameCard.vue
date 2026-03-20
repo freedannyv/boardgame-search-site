@@ -2,6 +2,7 @@
 import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
 import LogPlayButton from './LogPlayButton.vue'
+import CollectionFormModal from './CollectionFormModal.vue'
 
 export interface Game {
   id: string
@@ -19,6 +20,24 @@ export interface Game {
 const props = defineProps<{
   game: Game
 }>()
+
+// Collection modal state
+const showCollectionModal = ref(false)
+
+function handleOpenCollectionModal(gameId: number) {
+  // For now, just open the modal
+  showCollectionModal.value = true
+}
+
+function handleCloseCollectionModal() {
+  showCollectionModal.value = false
+}
+
+function handleSaveToCollection(data: any) {
+  console.log('Game added to collection:', data)
+  // TODO: Save to API/collection store
+  handleCloseCollectionModal()
+}
 
 const hasImage = computed(() => {
   return !!(props.game.image || props.game.thumbnail)
@@ -112,7 +131,10 @@ const playtime = computed(() => {
         </div>
       </div>
       <div class="flex gap-2 items-center mt-2">
-        <CollectionButton :gameId="Number(game.id)" />
+        <CollectionButton 
+          :gameId="Number(game.id)" 
+          @open-collection-modal="handleOpenCollectionModal" 
+        />
   
         <!-- Wishlist button -->
         <WishlistButton :gameId="Number(game.id)" />
@@ -122,5 +144,13 @@ const playtime = computed(() => {
 
       </div>
     </div>
+
+    <!-- Collection Form Modal -->
+    <CollectionFormModal
+      :show="showCollectionModal"
+      :game="{ id: Number(game.id), name: game.name, thumbnail: game.thumbnail }"
+      @close="handleCloseCollectionModal"
+      @save="handleSaveToCollection"
+    />
   </div>
 </template>

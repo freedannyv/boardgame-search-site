@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useGameSessionStore } from '../stores/gameSession'
+import BaseModal from './BaseModal.vue'
+import FullScreenModal from './FullScreenModal.vue'
 
 interface Player {
   id: string
@@ -50,47 +52,34 @@ function handleCancelForm() {
 
 <template>
   <!-- Live Play Session Modal -->
-  <Teleport to="body">
-    <Transition name="slide-up">
-      <div v-if="showSessionModal && activeSession" class="fixed inset-0 z-50 bg-gray-50">
-        <LivePlaySession
-          :game="{ id: activeSession.game.id, name: activeSession.game.name, thumbnail: activeSession.game.thumbnail }"
-          @finish-game="handleFinishGame"
-          @minimize-session="handleMinimizeSession"
-          @cancel-session="handleCancelSession"
-        />
-      </div>
-    </Transition>
-  </Teleport>
+  <BaseModal
+    :show="showSessionModal && activeSession !== null"
+    :close-on-overlay-click="false"
+    max-width="lg"
+    padding="none"
+    @close="handleCancelSession"
+  >
+    <LivePlaySession
+      :game="{ id: activeSession!.game.id, name: activeSession!.game.name, thumbnail: activeSession!.game.thumbnail }"
+      @finish-game="handleFinishGame"
+      @minimize-session="handleMinimizeSession"
+      @cancel-session="handleCancelSession"
+    />
+  </BaseModal>
 
   <!-- Finished Play Form -->
-  <Teleport to="body">
-    <Transition name="slide-up">
-      <div v-if="showForm" class="fixed inset-0 z-50 bg-gray-50">
-        <FinishedPlayForm
-          v-if="sessionPlayers.length || sessionDuration"
-          :game="{ id: '', name: 'Game Session', thumbnail: null }"
-          :initial-players="sessionPlayers"
-          :initial-duration="sessionDuration"
-          @save-play="handleSavePlay"
-          @cancel="handleCancelForm"
-        />
-      </div>
-    </Transition>
-  </Teleport>
+  <FullScreenModal
+    :show="showForm"
+    title="Log Play"
+    @close="handleCancelForm"
+  >
+    <FinishedPlayForm
+      v-if="sessionPlayers.length || sessionDuration"
+      :game="{ id: '', name: 'Game Session', thumbnail: null }"
+      :initial-players="sessionPlayers"
+      :initial-duration="sessionDuration"
+      @save-play="handleSavePlay"
+      @cancel="handleCancelForm"
+    />
+  </FullScreenModal>
 </template>
-
-<style scoped>
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: transform 0.3s ease-out;
-}
-
-.slide-up-enter-from {
-  transform: translateY(100%);
-}
-
-.slide-up-leave-to {
-  transform: translateY(100%);
-}
-</style>
