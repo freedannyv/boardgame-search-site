@@ -16,6 +16,7 @@ interface Player {
 const props = defineProps<{
   game: Game
   variant?: 'action' | 'card' | 'compact'
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }>()
 
 const sessionStore = useGameSessionStore()
@@ -171,14 +172,17 @@ const shouldShowButton = computed(() => {
 
   <!-- Finished Play Form -->
   <Teleport to="body">
-    <div v-if="currentView === 'form'" class="fixed inset-0 z-50 bg-gray-50">
-      <FinishedPlayForm
-        :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
-        :initial-players="sessionPlayers"
-        :initial-duration="sessionDuration"
-        @save-play="handleSavePlay"
-        @cancel="handleCancelForm"
-      />
+    <div v-if="currentView === 'form'" class="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
+      <div class="min-h-screen py-4">
+        <FinishedPlayForm
+          :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
+          :initial-players="sessionPlayers"
+          :initial-duration="sessionDuration"
+          :expansions="expansions"
+          @save-play="handleSavePlay"
+          @cancel="handleCancelForm"
+        />
+      </div>
     </div>
   </Teleport>
 </template>

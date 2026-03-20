@@ -20,12 +20,14 @@ interface PlayData {
   endTime: string
   players: Player[]
   winnerId: string | null
+  expansions?: string[]
 }
 
 const props = defineProps<{
   game: Game
   initialPlayers?: Player[]
   initialDuration?: number
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }>()
 
 const emit = defineEmits<{
@@ -58,6 +60,10 @@ const winnerId = ref<string | null>(null)
 // Players state
 const players = ref<Player[]>(props.initialPlayers?.map(p => ({ ...p, score: null })) || [])
 const newPlayerName = ref('')
+
+// Expansion state
+const usedExpansions = ref(false)
+const selectedExpansions = ref<string[]>([])
 
 // Set initial times based on duration if provided
 onMounted(() => {
@@ -118,7 +124,8 @@ async function handleSave() {
       startTime: startTime.value,
       endTime: endTime.value,
       players: players.value,
-      winnerId: winnerId.value
+      winnerId: winnerId.value,
+      expansions: usedExpansions.value ? selectedExpansions.value : []
     }
     
     // Check if user has 3+ reviews
@@ -188,7 +195,7 @@ const isValid = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 px-4 py-4">
       <div class="flex items-center gap-3">
@@ -241,6 +248,44 @@ const isValid = computed(() => {
               type="time"
               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
             />
+          </div>
+        </div>
+      </div>
+
+      <!-- Expansions Section -->
+      <div v-if="props.expansions && props.expansions.length > 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input
+            v-model="usedExpansions"
+            type="checkbox"
+            class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span class="text-gray-700 font-medium">Used any expansions?</span>
+        </label>
+
+        <!-- Expansion Checklist -->
+        <div
+          v-if="usedExpansions"
+          class="mt-4 p-4 bg-gray-50 rounded-xl"
+        >
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Select expansions used:</h3>
+          <div class="space-y-2">
+            <label
+              v-for="expansion in props.expansions"
+              :key="expansion.id"
+              class="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition-colors"
+            >
+              <input
+                :value="expansion.id"
+                v-model="selectedExpansions"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span class="text-sm text-gray-700">
+                {{ expansion.name }}
+                <span v-if="expansion.yearPublished" class="text-gray-500">({{ expansion.yearPublished }})</span>
+              </span>
+            </label>
           </div>
         </div>
       </div>

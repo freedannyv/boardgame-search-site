@@ -18,6 +18,7 @@ export interface GameHeaderProps {
 
 const props = defineProps<{
   game: GameHeaderProps
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }>()
 
 const collectionStore = useCollectionStore()
@@ -166,7 +167,7 @@ const imageUrl = computed(() => props.game.image || '/wingspan.webp')
 
     <!-- Action buttons -->
     <GameActions
-      :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
+      :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail, expansions: expansions }"
       :is-owned="isInCollection"
       :is-wishlisted="isInWishlist"
       class="mt-6 pt-6 border-t border-gray-100"

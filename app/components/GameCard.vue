@@ -13,6 +13,7 @@ export interface Game {
   maxPlayers?: number | null
   playingTime?: number | null
   yearPublished?: number | null
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }
 
 const props = defineProps<{
@@ -117,7 +118,7 @@ const playtime = computed(() => {
         <WishlistButton :gameId="Number(game.id)" />
         
         <!-- Log play -->
-        <LogPlayButton :game="game" variant="card" />
+        <LogPlayButton :game="game" :expansions="game.expansions" variant="card" />
 
       </div>
     </div>

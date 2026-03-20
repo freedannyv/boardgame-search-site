@@ -270,6 +270,7 @@ watch(gameId, () => {
         <GameHeader 
           v-if="gameHeaderData" 
           :game="gameHeaderData"
+          :expansions="expansions"
           :is-in-collection="isInCollection"
           :is-in-wishlist="isInWishlist"
           @add-to-collection="handleAddToCollection"
