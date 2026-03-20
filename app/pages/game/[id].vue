@@ -3,6 +3,8 @@ import type { Game } from '~/components/GameCard.vue'
 import { useCollectionStore } from '~/stores/useCollectionStore'
 import { useWishlistStore } from '~/stores/useWishlistStore'
 import { useGameActions } from '~/composables/useGameActions'
+import { useBggApi } from '~/composables/useBggApi'
+import { parseBggThingResponse, parseBggExpansionsResponse, extractExpansionIds } from '~/utils/bggParser'
 
 interface GameDetail extends Game {
   description?: string | null
@@ -24,6 +26,8 @@ const { toggleCollection, toggleWishlist } = useGameActions()
 const game = ref<GameDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+const expansions = ref<any[]>([])
+const expansionsLoading = ref(false)
 
 // Recommended games
 const recommendedGames = ref<Game[]>([
@@ -33,45 +37,119 @@ const recommendedGames = ref<Game[]>([
   { id: '104', name: 'Parks', thumbnail: null, average: 7.7, minPlayers: 1, maxPlayers: 5, playingTime: 60 },
 ])
 
-// Placeholder API call
+// Real BGG API call to fetch game details
 async function fetchGame(id: string): Promise<GameDetail> {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  // Mock game data
-  return {
-    id,
-    name: 'Gloomhaven',
-    image: null,
-    thumbnail: null,
-    average: 8.7,
-    minPlayers: 1,
-    maxPlayers: 4,
-    playingTime: 120,
-    yearPublished: 2017,
-    weight: 3.86,
-    description: `Gloomhaven is a game of Euro-inspired tactical combat in a persistent world of shifting motives. Players will take on the role of a wandering adventurer with their own special set of skills and their own reasons for traveling to this dark corner of the world.
+  try {
+    const { getThing } = useBggApi()
+    const response = await getThing(Number(id), {
+      stats: true,
+      market: false,
+      comments: false,
+      videos: false,
+      versions: false
+    })
+    
+    // Parse XML response and transform to GameDetail format
+    // console.log('============Parsed BGG game:', response.data || response)
+    const parsedGame = parseBggThingResponse(response.data || response)
+    
+    // Extract expansion IDs from base game response
+    const expansionIds = extractExpansionIds(response.data || response)
+    console.log('Extracted expansion IDs:', expansionIds)
+    
+    // Store expansion IDs for later use
+    if (expansionIds.length > 0) {
+      // We'll use this in fetchExpansions
+      ;(window as any).tempExpansionIds = expansionIds
+    }
+    
+    if (!parsedGame) {
+      throw new Error('Failed to parse game data')
+    }
+    
+    // Transform to GameDetail interface
+    return {
+      id: parsedGame.id,
+      name: parsedGame.name,
+      image: (parsedGame as any).image || null,
+      thumbnail: parsedGame.thumbnail,
+      average: parsedGame.average || 0,
+      minPlayers: (parsedGame as any).minPlayers || 1,
+      maxPlayers: (parsedGame as any).maxPlayers || 4,
+      playingTime: (parsedGame as any).playingTime || 60,
+      yearPublished: parsedGame.yearPublished,
+      weight: (parsedGame as any).weight || null,
+      description: (parsedGame as any).description || null,
+      categories: [], // TODO: Extract categories from XML
+      mechanics: [] // TODO: Extract mechanics from XML
+    }
+  } catch (error) {
+    console.error('Error fetching game:', error)
+    throw error
+  }
+}
 
-Players must work together out of necessity to clear out menacing dungeons and forgotten ruins. In the process, they will enhance their abilities with experience and loot, discover new locations to explore and plunder, and expand an ever-branching story fueled by the decisions they make.
-
-This is a game with a persistent and changing world that is ideally played over many game sessions. After a scenario, players will make decisions on what to do, which will determine how the story continues, much like a "Choose Your Own Adventure" book.`,
-    categories: [
-      { name: 'Adventure' },
-      { name: 'Exploration' },
-      { name: 'Fantasy' },
-      { name: 'Fighting' },
-      { name: 'Miniatures' },
-    ],
-    mechanics: [
-      { name: 'Action Queue' },
-      { name: 'Campaign / Battle Card Driven' },
-      { name: 'Cooperative Game' },
-      { name: 'Grid Movement' },
-      { name: 'Hand Management' },
-      { name: 'Legacy Game' },
-      { name: 'Modular Board' },
-      { name: 'Role Playing' },
-    ]
+// Fetch game expansions from BGG
+const fetchExpansions = async () => {
+  try {
+    expansionsLoading.value = true
+    const { getThing } = useBggApi()
+    
+    // Get expansion IDs from the stored temp variable
+    const expansionIds = (window as any).tempExpansionIds || []
+    
+    if (expansionIds.length === 0) {
+      expansions.value = []
+      return
+    }
+    
+    console.log('Fetching expansions for IDs:', expansionIds)
+    
+    // Fetch each expansion individually
+    const expansionPromises = expansionIds.map(async (id: string) => {
+      try {
+        const response = await getThing(Number(id), {
+          stats: false,
+          market: false,
+          comments: false,
+          videos: false,
+          versions: false
+        })
+        
+        const parsedExpansion = parseBggThingResponse(response.data || response)
+        if (parsedExpansion) {
+          return {
+            id: parsedExpansion.id,
+            name: parsedExpansion.name,
+            yearPublished: parsedExpansion.yearPublished,
+            thumbnail: parsedExpansion.thumbnail,
+            average: null
+          }
+        }
+        return null
+      } catch (error) {
+        console.error(`Error fetching expansion ${id}:`, error)
+        return null
+      }
+    })
+    
+    const expansionResults = await Promise.all(expansionPromises)
+    const validExpansions = expansionResults.filter(exp => exp !== null)
+    
+    // Sort expansions by yearPublished (newest first)
+    const sortedExpansions = validExpansions.sort((a, b) => {
+      const yearA = a.yearPublished || 0
+      const yearB = b.yearPublished || 0
+      return yearB - yearA
+    })
+    
+    console.log('Fetched expansions:', sortedExpansions)
+    expansions.value = sortedExpansions
+  } catch (error) {
+    console.error('Error fetching expansions:', error)
+    expansions.value = []
+  } finally {
+    expansionsLoading.value = false
   }
 }
 
@@ -82,6 +160,8 @@ async function loadGame() {
   
   try {
     game.value = await fetchGame(gameId.value)
+    // After game is loaded, fetch expansions
+    await fetchExpansions()
   } catch (e) {
     error.value = 'Failed to load game details'
   } finally {
@@ -211,6 +291,15 @@ watch(gameId, () => {
           v-if="game.categories?.length || game.mechanics?.length"
           :categories="game.categories"
           :mechanics="game.mechanics"
+          class="mt-8"
+        />
+
+        <!-- Expansions -->
+        <GameSection
+          ref="expansionsSection"
+          :title="`${expansions.length} Expansions for ${game.name}`"
+          :games="expansions"
+          :loading="expansionsLoading"
           class="mt-8"
         />
 

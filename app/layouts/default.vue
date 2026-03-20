@@ -2,6 +2,8 @@
 import type { Filters } from '~/components/FilterDrawer.vue'
 import type { SearchResult } from '~/components/SearchBar.vue'
 import GlobalToast from '~/components/GlobalToast.vue'
+import { useBggApi } from '~/composables/useBggApi'
+import { parseBggSearchResponse } from '~/utils/bggParser'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,18 +52,9 @@ function closeFilters() {
   isFilterOpen.value = false
 }
 
-// Mock search for dropdown results
+// Real search using BGG API - always dropdown behavior
 async function handleSearch(query: string) {
-  // If on search page, update URL directly (dropdown is hidden)
-  if (route.path === '/search') {
-    router.replace({ 
-      path: '/search', 
-      query: query ? { q: query } : {} 
-    })
-    return
-  }
-  
-  // Otherwise, fetch dropdown results
+  // Always fetch dropdown results, regardless of current page
   if (!query.trim()) {
     searchResults.value = []
     return
@@ -69,25 +62,24 @@ async function handleSearch(query: string) {
   
   searchLoading.value = true
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300))
-  
-  // Mock results
-  const mockGames = [
-    { id: '1', name: 'Gloomhaven', average: 8.7, yearPublished: 2017 },
-    { id: '2', name: 'Brass: Birmingham', average: 8.6, yearPublished: 2018 },
-    { id: '3', name: 'Pandemic Legacy: Season 1', average: 8.5, yearPublished: 2015 },
-    { id: '4', name: 'Twilight Imperium', average: 8.6, yearPublished: 2017 },
-    { id: '5', name: 'Spirit Island', average: 8.3, yearPublished: 2017 },
-    { id: '6', name: 'Terraforming Mars', average: 8.4, yearPublished: 2016 },
-  ]
-  
-  // Filter by query
-  searchResults.value = mockGames.filter(g => 
-    g.name.toLowerCase().includes(query.toLowerCase())
-  )
-  
-  searchLoading.value = false
+  try {
+    const { searchItems } = useBggApi()
+    const response = await searchItems({
+      query: query.trim(),
+      type: 'boardgame'
+    })
+    
+    // Parse XML response and transform to SearchResult format
+    const transformedResults = parseBggSearchResponse(response.data || response)
+    console.log('Parsed BGG results:', transformedResults)
+    
+    searchResults.value = transformedResults
+  } catch (error) {
+    console.error('Search error:', error)
+    searchResults.value = []
+  } finally {
+    searchLoading.value = false
+  }
 }
 
 function handleSelectGame(result: SearchResult) {
@@ -133,7 +125,7 @@ function handleApplyFilters(newFilters: Filters) {
             class="flex-1"
             :results="searchResults"
             :loading="searchLoading"
-            :show-results="route.path !== '/search'"
+            :show-results="true"
             @search="handleSearch"
             @select="handleSelectGame"
             @view-all="handleViewAllResults"

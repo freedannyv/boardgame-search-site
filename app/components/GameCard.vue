@@ -12,6 +12,7 @@ export interface Game {
   minPlayers?: number | null
   maxPlayers?: number | null
   playingTime?: number | null
+  yearPublished?: number | null
 }
 
 const props = defineProps<{
@@ -52,11 +53,11 @@ const playtime = computed(() => {
 </script>
 
 <template>
-  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 w-48">
     <!-- Image container -->
     <NuxtLink :to="`/game/${game.id}`" class="block relative bg-gray-100 overflow-hidden cursor-pointer">
       <!-- Game image -->
-       <div class="w-52 sm:w-full">
+       <div class="w-52 aspect-square sm:w-full">
          <img
            :src=" hasImage ? imageUrl : '/wingspan.webp'"
            :alt="game.name"
@@ -89,9 +90,10 @@ const playtime = computed(() => {
     <div class="p-3">
       <!-- Title -->
       <NuxtLink :to="`/game/${game.id}`" class="block">
-        <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight mb-2 hover:text-indigo-600 transition-colors">
+        <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight  hover:text-indigo-600 transition-colors">
           {{ game.name }}
         </h3>
+        <span class="text-sm text-gray-500">{{ game.yearPublished }}</span>
       </NuxtLink>
 
       <!-- Meta info -->

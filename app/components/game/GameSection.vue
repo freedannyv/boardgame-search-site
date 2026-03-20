@@ -6,16 +6,21 @@ interface Game {
   id: string
   name: string
   thumbnail?: string | null
+  yearPublished?: number | null
 }
 
-const props = defineProps<{
+interface Props {
   title: string
   games: Game[]
-}>()
+  loading?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false
+})
 
 const showAll = ref(false)
 
-// Expose showAll state to parent for potential external control
 defineExpose({
   showAll
 })
@@ -25,31 +30,36 @@ defineExpose({
   <section class="mb-6">
     <div class="flex items-center justify-between px-4 mb-3">
       <h2 class="text-lg font-bold text-gray-900">{{ title }}</h2>
-      <button 
-        @click="showAll = !showAll"
-        class="text-indigo-600 text-sm font-medium flex items-center gap-1 hover:text-indigo-700"
-      >
-        {{ showAll ? 'Collapse' : 'See All' }}
-        <Icon :name="showAll ? 'mdi:chevron-up' : 'mdi:chevron-right'" class="w-4 h-4" />
-      </button>
     </div>
     
     <!-- Expanded Grid View -->
     <div v-if="showAll" class="px-4">
       <GameGrid
-        :games="games"
+        :games="props.games"
+        :loading="false"
       />
     </div>
     
     <!-- Horizontal Scroll View -->
     <div v-else class="overflow-x-auto scrollbar-hide">
       <div class="flex gap-3 px-4 pb-2">
-        <div v-for="game in games" :key="game.id" class="flex-shrink-0 aspect-square">
+        <div v-for="game in props.games" :key="game.id" class="">
           <GameCard
             :game="game"
           />
         </div>
       </div>
+    </div>
+
+    <div class="flex justify-end mt-2">
+      <button 
+          @click="showAll = !showAll"
+          class="text-indigo-600 text-sm font-medium flex items-center gap-1 hover:text-indigo-700 justify-end"
+        >
+          {{ showAll ? 'Collapse' : 'See All' }}
+          <Icon :name="showAll ? 'mdi:chevron-up' : 'mdi:chevron-right'" class="w-4 h-4" />
+        </button>
+
     </div>
   </section>
 </template>

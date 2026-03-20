@@ -18,6 +18,7 @@ interface SearchParams {
 
 interface ThingParams {
   id: number
+  type?: 'boardgame' | 'boardgameexpansion' | 'boardgameaccessory'
   stats?: boolean
   market?: boolean
   comments?: boolean
