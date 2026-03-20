@@ -20,11 +20,37 @@ const categories = [
   { name: 'Deck Building', icon: 'mdi:cards', slug: 'deck-building' },
   { name: 'Abstract', icon: 'mdi:shape', slug: 'abstract' },
 ]
+
+// Handle fetch button click with BGG API call
+const handleGameFetch = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const token = config.public.BGG_API_TOKEN
+    
+    const response = await $fetch('https://boardgamegeek.com/xmlapi2/thing?id=224517', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/xml',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    console.log('BGG API Response:', response)
+  } catch (error) {
+    console.error('BGG API Error:', error)
+    toast.show('Failed to fetch games', 'error')
+  }
+}
+
+// ... rest of the script remains the same ...
+
 </script>
 
 <template>
   <div class="pb-6">
     <CollectionSnapshot />
+
+    <button @click="handleGameFetch">Fetch Games</button>
     
     <GameNightPicker :games="[...recommendedGames, ...popularGames]" />
 

@@ -13,6 +13,10 @@ export default defineNuxtConfig({
     'pinia-plugin-persistedstate/nuxt'
   ],
   runtimeConfig: {
-    databaseUrl: ''
+    databaseUrl: '',
+    bggApiToken: process.env.BGG_API_TOKEN,
+    public: {
+      BGG_API_TOKEN: process.env.BGG_API_TOKEN
+    }
   }
 })
