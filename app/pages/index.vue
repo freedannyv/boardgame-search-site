@@ -6,9 +6,17 @@ import CollectionSnapshot from '~/components/collection/CollectionSnapshot.vue'
 import { usePlaceholderGamesStore } from '~/stores/games'
 const placeholderGamesStore = usePlaceholderGamesStore()
 
+// Import BGG API composable
+import { useBggApi } from '~/composables/useBggApi'
+import { parseBggHotItemsResponse } from '~/utils/bggParser'
+
 const recommendedGames = computed(() => placeholderGamesStore.getPlaceholderGames)
 
 const toast = useToastStore()
+
+// Reactive state for hot games
+const hotGames = ref<any[]>([])
+const hotGamesLoading = ref(false)
 
 const popularGames = computed(() => placeholderGamesStore.getPlaceholderGames)
 
@@ -21,18 +29,42 @@ const categories = [
   { name: 'Abstract', icon: 'mdi:shape', slug: 'abstract' },
 ]
 
+// Fetch hot games from BGG
+const fetchHotGames = async () => {
+  try {
+    hotGamesLoading.value = true
+    const { getHotItems } = useBggApi()
+    
+    const response = await getHotItems('boardgame')
+    console.log('BGG Hot Games Response:', response)
+    console.log('Raw XML:', response.data || response)
+    
+    // Parse XML response and transform to game format
+    const parsedGames = parseBggHotItemsResponse(response.data || response)
+    console.log('Parsed hot games:', parsedGames)
+    
+    hotGames.value = parsedGames
+  } catch (error) {
+    console.error('Error fetching hot games:', error)
+    hotGames.value = []
+  } finally {
+    hotGamesLoading.value = false
+  }
+}
+
+// Fetch hot games on page load
+onMounted(() => {
+  fetchHotGames()
+})
+
 // Handle fetch button click with BGG API call
 const handleGameFetch = async () => {
   try {
-    const config = useRuntimeConfig()
-    const token = config.public.BGG_API_TOKEN
+    const { searchItems } = useBggApi()
     
-    const response = await $fetch('https://boardgamegeek.com/xmlapi2/thing?id=224517', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/xml',
-        'Authorization': `Bearer ${token}`
-      }
+    const response = await searchItems({
+      query: 'obsession',
+      type: 'boardgame'
     })
     
     console.log('BGG API Response:', response)
@@ -56,9 +88,10 @@ const handleGameFetch = async () => {
 
     <!-- Recommended For You -->
     <GameSection
-      ref="recommendedSection"
-      title="Recommended For You"
-      :games="recommendedGames"
+      ref="hotGamesSection"
+      title="Hot Games Today"
+      :games="hotGames"
+      :loading="hotGamesLoading"
     />
     
     <!-- Popular Games -->

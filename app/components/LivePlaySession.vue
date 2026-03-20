@@ -48,6 +48,27 @@ const isRunning = computed(() => sessionStore.activeSession?.isRunning ?? false)
 const isPaused = computed(() => sessionStore.activeSession?.isPaused ?? false)
 const players = computed(() => sessionStore.activeSession?.players ?? [])
 const canStartTimer = computed(() => players.value.length > 0)
+
+// Prevent body scroll when LivePlaySession is mounted
+onMounted(() => {
+  // Save current scroll position
+  const scrollY = window.scrollY
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.width = '100%'
+  document.body.style.overflow = 'hidden'
+})
+
+// Restore body scroll when LivePlaySession is unmounted
+onUnmounted(() => {
+  // Restore scroll position
+  const scrollY = document.body.style.top
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.width = ''
+  document.body.style.overflow = ''
+  window.scrollTo(0, parseInt(scrollY || '0') * -1)
+})
 const showPlayerRequired = ref(false)
 
 // Clear warning when player is added
@@ -264,18 +285,19 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white border-b border-gray-200 px-4 py-4">
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          @click="handleMinimize"
-          class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        >
-          <Icon name="mdi:chevron-down" class="w-5 h-5 text-gray-600" />
-        </button>
-        <div class="flex-1 min-w-0">
+  <div class="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
+    <div class="min-h-screen py-4">
+      <!-- Header -->
+      <div class="bg-white border-b border-gray-200 px-4 py-4">
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            @click="handleMinimize"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <Icon name="mdi:chevron-down" class="w-5 h-5 text-gray-600" />
+          </button>
+          <div class="flex-1 min-w-0">
           <p class="text-xs text-gray-500 uppercase tracking-wide">Now Playing</p>
           <h1 class="font-bold text-gray-900 truncate">{{ game.name }}</h1>
         </div>
@@ -500,6 +522,7 @@ function handleCancel() {
       @submit="handleReviewSubmit"
       @dont-review="handleDontReview"
     />
+    </div>
   </div>
 </template>
 

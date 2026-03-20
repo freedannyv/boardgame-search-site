@@ -6,6 +6,7 @@ interface Game {
   id: string | number
   name: string
   thumbnail?: string | null
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }
 
 const props = defineProps<{
@@ -24,6 +25,6 @@ const props = defineProps<{
     />
 
     <!-- Log play button -->
-    <LogPlayButton :game="game" variant="action" />
+    <LogPlayButton :game="game" :expansions="game.expansions" variant="action" />
   </div>
 </template>
