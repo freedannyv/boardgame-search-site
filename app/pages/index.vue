@@ -24,10 +24,11 @@ const categories = [
 // Handle fetch button click with BGG API call
 const handleGameFetch = async () => {
   try {
+    
     const config = useRuntimeConfig()
     const token = config.public.BGG_API_TOKEN
-    
-    const response = await $fetch('https://boardgamegeek.com/xmlapi2/thing?id=224517', {
+     
+    const response = await $fetch('https://boardgamegeek.com/xmlapi2/search?query=obsession', {
       method: 'GET',
       headers: {
         'Accept': 'application/xml',
@@ -38,6 +39,7 @@ const handleGameFetch = async () => {
     console.log('BGG API Response:', response)
   } catch (error) {
     console.error('BGG API Error:', error)
+    console.error('Error status:', error?.status || error?.statusCode)
     toast.show('Failed to fetch games', 'error')
   }
 }
