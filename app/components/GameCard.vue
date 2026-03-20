@@ -2,6 +2,7 @@
 import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
 import LogPlayButton from './LogPlayButton.vue'
+import CollectionFormModal from './CollectionFormModal.vue'
 
 export interface Game {
   id: string
@@ -12,11 +13,31 @@ export interface Game {
   minPlayers?: number | null
   maxPlayers?: number | null
   playingTime?: number | null
+  yearPublished?: number | null
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }
 
 const props = defineProps<{
   game: Game
 }>()
+
+// Collection modal state
+const showCollectionModal = ref(false)
+
+function handleOpenCollectionModal(gameId: number) {
+  // For now, just open the modal
+  showCollectionModal.value = true
+}
+
+function handleCloseCollectionModal() {
+  showCollectionModal.value = false
+}
+
+function handleSaveToCollection(data: any) {
+  console.log('Game added to collection:', data)
+  // TODO: Save to API/collection store
+  handleCloseCollectionModal()
+}
 
 const hasImage = computed(() => {
   return !!(props.game.image || props.game.thumbnail)
@@ -52,11 +73,11 @@ const playtime = computed(() => {
 </script>
 
 <template>
-  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 w-48">
     <!-- Image container -->
     <NuxtLink :to="`/game/${game.id}`" class="block relative bg-gray-100 overflow-hidden cursor-pointer">
       <!-- Game image -->
-       <div class="w-52 sm:w-full">
+       <div class="w-52 aspect-square sm:w-full">
          <img
            :src=" hasImage ? imageUrl : '/wingspan.webp'"
            :alt="game.name"
@@ -89,9 +110,10 @@ const playtime = computed(() => {
     <div class="p-3">
       <!-- Title -->
       <NuxtLink :to="`/game/${game.id}`" class="block">
-        <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight mb-2 hover:text-indigo-600 transition-colors">
+        <h3 class="font-semibold text-gray-900 line-clamp-2 leading-tight  hover:text-indigo-600 transition-colors">
           {{ game.name }}
         </h3>
+        <span class="text-sm text-gray-500">{{ game.yearPublished }}</span>
       </NuxtLink>
 
       <!-- Meta info -->
@@ -109,15 +131,26 @@ const playtime = computed(() => {
         </div>
       </div>
       <div class="flex gap-2 items-center mt-2">
-        <CollectionButton :gameId="Number(game.id)" />
+        <CollectionButton 
+          :gameId="Number(game.id)" 
+          @open-collection-modal="handleOpenCollectionModal" 
+        />
   
         <!-- Wishlist button -->
         <WishlistButton :gameId="Number(game.id)" />
         
         <!-- Log play -->
-        <LogPlayButton :game="game" variant="card" />
+        <LogPlayButton :game="game" :expansions="game.expansions" variant="card" />
 
       </div>
     </div>
+
+    <!-- Collection Form Modal -->
+    <CollectionFormModal
+      :show="showCollectionModal"
+      :game="{ id: Number(game.id), name: game.name, thumbnail: game.thumbnail }"
+      @close="handleCloseCollectionModal"
+      @save="handleSaveToCollection"
+    />
   </div>
 </template>

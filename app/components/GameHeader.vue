@@ -18,6 +18,7 @@ export interface GameHeaderProps {
 
 const props = defineProps<{
   game: GameHeaderProps
+  expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }>()
 
 const collectionStore = useCollectionStore()
@@ -85,20 +86,27 @@ const imageUrl = computed(() => props.game.image || '/wingspan.webp')
 <template>
   <div>
     <!-- Game image -->
-    <div class="rounded-xl sm:rounded-2xl shadow-lg overflow-hidden bg-gray-100 w-fit">
-      <img
-        :src="imageUrl"
-        :alt="game.name"
-        class=""
-      />
-    </div>
+     <div class="flex gap-4">
+
+       <div class="rounded-xl sm:rounded-2xl shadow-lg overflow-hidden bg-gray-100 w-64">
+         <img
+         :src="imageUrl"
+         :alt="game.name"
+         class=""
+         />
+        </div>
+
+        <div class="flex flex-grow items-end">
+          <div class="min-w-0">
+            <p v-if="game.year" class="text-gray-500 mt-1">{{ game.year }}</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{{ game.name }}</h1>
+          </div>
+        </div>
+      </div>
 
     <!-- Title and rating -->
-    <div class="flex items-start gap-3 mt-6">
-      <div class="min-w-0">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{{ game.name }}</h1>
-        <p v-if="game.year" class="text-gray-500 mt-1">{{ game.year }}</p>
-      </div>
+    <div class="flex items-start gap-3">
+      
       
       <!-- Rating badge -->
       <div v-if="game.rating" class="flex items-start gap-1.5 px-3 py-2 rounded-xl">
@@ -159,7 +167,7 @@ const imageUrl = computed(() => props.game.image || '/wingspan.webp')
 
     <!-- Action buttons -->
     <GameActions
-      :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail }"
+      :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail, expansions: expansions }"
       :is-owned="isInCollection"
       :is-wishlisted="isInWishlist"
       class="mt-6 pt-6 border-t border-gray-100"

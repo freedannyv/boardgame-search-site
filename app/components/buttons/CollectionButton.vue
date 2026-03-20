@@ -6,6 +6,10 @@ const props = defineProps<{
   gameId: number
 }>()
 
+const emit = defineEmits<{
+  openCollectionModal: [gameId: number]
+}>()
+
 const collectionStore = useCollectionStore()
 const { isOwned } = storeToRefs(collectionStore)
 
@@ -15,7 +19,8 @@ function toggleCollection() {
   if (isOwned.value(props.gameId)) {
     collectionStore.removeGame(props.gameId)
   } else {
-    collectionStore.addGame(props.gameId)
+    // Open collection modal instead of just adding to store
+    emit('openCollectionModal', props.gameId)
   }
 }
 </script>
