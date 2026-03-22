@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { useCollectionStore } from '../stores/useCollectionStore'
-import { useWishlistStore } from '../stores/useWishlistStore'
-import { useGameActions } from '../composables/useGameActions'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useUserGamesStore } from '~/stores/useUserGamesStore'
 import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
+import LogPlayButton from './LogPlayButton.vue'
 
 export interface Game {
-  id: string
+  id: string | number
   name: string
   image?: string | null
   thumbnail?: string | null
@@ -20,11 +21,10 @@ const props = defineProps<{
   game: Game
 }>()
 
-const collectionStore = useCollectionStore()
-const wishlistStore = useWishlistStore()
-const { toggleCollection, toggleWishlist } = useGameActions()
+const userGamesStore = useUserGamesStore()
+const { collection, wishlist } = storeToRefs(userGamesStore)
 
-const imageUrl = computed(() => props.game.thumbnail || props.game.image)
+const imageUrl = computed(() => props.game.image || props.game.thumbnail || '/wingspan.webp')
 
 const playerCount = computed(() => {
   const min = props.game.minPlayers
@@ -44,23 +44,17 @@ const playTime = computed(() => {
 })
 
 const isInCollection = computed(() => {
-  return collectionStore.isOwned(Number(props.game.id))
+  return userGamesStore.isGameInCollection(props.game.id)
 })
 
 const isInWishlist = computed(() => {
-  return wishlistStore.isWishlisted(Number(props.game.id))
+  return userGamesStore.isGameInWishlist(props.game.id)
 })
 
-function handleCollectionClick() {
-  toggleCollection(Number(props.game.id))
-}
-
-function handleWishlistClick() {
-  toggleWishlist(Number(props.game.id), {
-    thumbnail: props.game.thumbnail,
-    image: props.game.image
-  })
-}
+// Hide wishlist if game is in collection
+const showWishlist = computed(() => {
+  return isInCollection.value ? false : isInWishlist.value
+})
 </script>
 
 <template>
@@ -105,7 +99,12 @@ function handleWishlistClick() {
     <div class="flex items-center gap-1 flex-shrink-0">
       <!-- Collection toggle -->
       <CollectionButton :gameId="Number(game.id)" />
-      <WishlistButton :gameId="Number(game.id)" />
+      
+      <!-- Wishlist toggle (only show if not in collection) -->
+      <WishlistButton 
+        v-if="showWishlist"
+        :gameId="Number(game.id)" 
+      />
 
       <!-- Log play -->
       <LogPlayButton :game="game" variant="compact" />

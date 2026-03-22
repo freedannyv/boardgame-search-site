@@ -69,11 +69,11 @@ const playtime = computed(() => {
 </script>
 
 <template>
-  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 w-48">
+  <div class="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 xs:w-40 w-48 md:w-52 xl:w-56">
     <!-- Image container -->
     <NuxtLink :to="`/game/${game.id}`" class="block relative bg-gray-100 overflow-hidden cursor-pointer">
       <!-- Game image -->
-       <div class="w-52 aspect-square sm:w-full">
+       <div class="w-52 aspect-square w-full">
          <img
            :src=" hasImage ? imageUrl : '/wingspan.webp'"
            :alt="game.name"

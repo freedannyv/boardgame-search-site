@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { useCollectionStore } from '../stores/useCollectionStore'
-import { useWishlistStore } from '../stores/useWishlistStore'
-import { useGameActions } from '../composables/useGameActions'
 
 export interface GameHeaderProps {
   id: string | number
@@ -20,24 +17,6 @@ const props = defineProps<{
   game: GameHeaderProps
   expansions?: Array<{ id: string; name: string; yearPublished?: number | null }>
 }>()
-
-const collectionStore = useCollectionStore()
-const wishlistStore = useWishlistStore()
-const { toggleCollection, toggleWishlist } = useGameActions()
-
-const emit = defineEmits<{
-  'addToCollection': []
-  'removeFromCollection': []
-  'toggleWishlist': []
-}>()
-
-const isInCollection = computed(() => {
-  return collectionStore.isOwned(Number(props.game.id))
-})
-
-const isInWishlist = computed(() => {
-  return wishlistStore.isWishlisted(Number(props.game.id))
-})
 
 const playerCount = computed(() => {
   const min = props.game.minPlayers
@@ -65,23 +44,6 @@ const weightLabel = computed(() => {
   if (w < 4.5) return 'Medium Heavy'
   return 'Heavy'
 })
-
-function handleCollectionClick() {
-  toggleCollection(Number(props.game.id))
-  if (isInCollection.value) {
-    emit('removeFromCollection')
-  } else {
-    emit('addToCollection')
-  }
-}
-
-function handleWishlistClick() {
-  toggleWishlist(Number(props.game.id), {
-    thumbnail: props.game.thumbnail,
-    image: props.game.image
-  })
-  emit('toggleWishlist')
-}
 
 const imageUrl = computed(() => props.game.image || '/wingspan.webp')
 </script>
@@ -171,12 +133,7 @@ const imageUrl = computed(() => props.game.image || '/wingspan.webp')
     <!-- Action buttons -->
     <GameActions
       :game="{ id: game.id, name: game.name, thumbnail: game.thumbnail, expansions: expansions }"
-      :is-owned="isInCollection"
-      :is-wishlisted="isInWishlist"
       class="mt-6 pt-6 border-t border-gray-100"
-      @add-to-collection="emit('addToCollection')"
-      @remove-from-collection="emit('removeFromCollection')"
-      @toggle-wishlist="emit('toggleWishlist')"
     />
   </div>
 </template>

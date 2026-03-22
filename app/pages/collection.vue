@@ -1,12 +1,25 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
+import type { CollectionFiltersType } from '~/components/CollectionControls.vue'
 import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import CompactGameRow from '~/components/CompactGameRow.vue'
 
 // Store
 const userGamesStore = useUserGamesStore()
 const { collection, isLoading, isLoaded } = storeToRefs(userGamesStore)
+
+// Local state for filters and view
+const filters = ref<CollectionFiltersType>({
+  playerCount: null,
+  playTime: null,
+  complexity: null,
+  category: null,
+  mechanic: null
+})
+
+const sortBy = ref<string>('name')
+const viewMode = ref<'grid' | 'list'>('grid')
 
 // Transform collection data for GameGrid
 const gamesForGrid = computed(() => {
@@ -40,21 +53,6 @@ onMounted(async () => {
   }
 })
 
-// Filters
-const filters = ref<CollectionFiltersType>({
-  playerCount: null,
-  playTime: null,
-  complexity: null,
-  category: null,
-  mechanic: null
-})
-
-// Sort
-const sortBy = ref<string>('name')
-
-// View mode
-const viewMode = ref<'grid' | 'list'>('grid')
-
 // Handle remove from collection
 async function handleRemoveFromCollection(gameId: string) {
   try {
@@ -64,16 +62,21 @@ async function handleRemoveFromCollection(gameId: string) {
   }
 }
 
-// Handle filter changes from component
+// Handle filter changes from CollectionControls
 function handleFiltersChanged(newFilters: CollectionFiltersType) {
   filters.value = newFilters
   // TODO: Apply filters to collectionGames
 }
 
-// Handle sort changes
+// Handle sort changes from CollectionControls
 function handleSortChanged(newSortBy: string) {
   sortBy.value = newSortBy
   // TODO: Apply sorting to collectionGames
+}
+
+// Handle view mode changes from CollectionControls
+function handleViewModeChanged(newViewMode: 'grid' | 'list') {
+  viewMode.value = newViewMode
 }
 </script>
 
@@ -107,39 +110,13 @@ function handleSortChanged(newSortBy: string) {
 
     <!-- Filters & Sort Bar -->
     <div class="sticky top-14 z-20 bg-white border-b border-gray-100 px-4 py-3 mt-4">
-      <div class="flex items-center justify-between gap-3">
-        <!-- Collection Filters Component -->
-        <CollectionFilters 
-          :filters="filters" 
-          @filters-changed="handleFiltersChanged"
-        />
-
-        <div class="flex items-center gap-2">
-          <!-- Sort dropdown -->
-          <CollectionSort 
-            :sort-by="sortBy" 
-            @sort-changed="handleSortChanged" 
-          />
-
-          <!-- View toggle -->
-          <div class="flex items-center bg-gray-100 rounded-lg p-1">
-            <button
-              @click="viewMode = 'grid'"
-              class="p-2 rounded-md transition-colors"
-              :class="viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-            >
-              <Icon name="mdi:view-grid" class="w-5 h-5" />
-            </button>
-            <button
-              @click="viewMode = 'list'"
-              class="p-2 rounded-md transition-colors"
-              :class="viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-            >
-              <Icon name="mdi:view-list" class="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Collection Controls -->
+      <CollectionControls
+        @filters-changed="handleFiltersChanged"
+        @sort-changed="handleSortChanged"
+        @view-mode-changed="handleViewModeChanged"
+        class="mt-6"
+      />
     </div>
 
     <!-- Content -->
@@ -156,9 +133,22 @@ function handleSortChanged(newSortBy: string) {
 
       <!-- Grid view -->
       <GameGrid
-        v-else-if="gamesForGrid?.length > 0"
+        v-else-if="viewMode === 'grid' && gamesForGrid?.length > 0"
         :games="gamesForGrid"
       />
+
+      <!-- List view -->
+      <div 
+        v-else-if="viewMode === 'list' && gamesForGrid?.length > 0"
+        class="space-y-2"
+      >
+        <CompactGameRow
+          v-for="game in gamesForGrid"
+          :key="game.id"
+          :game="game"
+          @remove="handleRemoveFromCollection"
+        />
+      </div>
 
       <!-- Empty state -->
       <div v-else-if="!isLoading" class="text-center py-12">
