@@ -10,13 +10,28 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
-    'pinia-plugin-persistedstate/nuxt'
+    'pinia-plugin-persistedstate/nuxt',
+    '@nuxtjs/supabase'
   ],
   runtimeConfig: {
     databaseUrl: '',
     bggApiToken: process.env.BGG_API_TOKEN,
     public: {
-      BGG_API_TOKEN: process.env.BGG_API_TOKEN
+      BGG_API_TOKEN: process.env.BGG_API_TOKEN,
+      supabaseUrl: '',
+      supabaseKey: '',
+
     }
-  }
+  },
+
+  supabase: {
+    types: false,
+    useSsrCookies: true,
+    redirectOptions: {
+      login: '/auth',
+      callback: '/confirm',
+      exclude: ['/', '/reset', '/update'], // Add public routes here
+      saveRedirectToCookie: true,
+    },
+  },
 })

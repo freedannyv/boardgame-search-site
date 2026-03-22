@@ -51,8 +51,8 @@ export function useBggApi() {
         query: params
       })
       
-      console.log('BGG Search Response:', response)
-      return response
+     // console.log('BGG Search Response:', response)
+      return response as BggApiResponse
     } catch (error) {
       console.error('BGG Search Error:', error)
       throw error
@@ -67,8 +67,8 @@ export function useBggApi() {
         query: { id, ...params }
       })
       
-      console.log('BGG Thing Response:', response)
-      return response
+      // console.log('BGG Thing Response:', response)
+      return response as BggApiResponse
     } catch (error) {
       console.error('BGG Thing Error:', error)
       throw error
@@ -83,8 +83,8 @@ export function useBggApi() {
         query: { username, ...params }
       })
       
-      console.log('BGG User Response:', response)
-      return response
+      // console.log('BGG User Response:', response)
+      return response as BggApiResponse
     } catch (error) {
       console.error('BGG User Error:', error)
       throw error
@@ -99,8 +99,8 @@ export function useBggApi() {
         query: { username, ...params }
       })
       
-      console.log('BGG Collection Response:', response)
-      return response
+      // console.log('BGG Collection Response:', response)
+      return response as BggApiResponse
     } catch (error) {
       console.error('BGG Collection Error:', error)
       throw error
@@ -115,8 +115,8 @@ export function useBggApi() {
         query: { type }
       })
       
-      console.log('BGG Hot Items Response:', response)
-      return response
+      // console.log('BGG Hot Items Response:', response)
+      return response as BggApiResponse
     } catch (error) {
       console.error('BGG Hot Items Error:', error)
       throw error
