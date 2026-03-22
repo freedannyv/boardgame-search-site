@@ -25,10 +25,12 @@ export default defineNuxtConfig({
   },
 
   supabase: {
+    types: false,
+    useSsrCookies: true,
     redirectOptions: {
-      login: '/login',
+      login: '/auth',
       callback: '/confirm',
-      exclude: ['/', '/about'],
+      exclude: ['/', '/reset', '/update'], // Add public routes here
       saveRedirectToCookie: true,
     },
   },

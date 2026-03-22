@@ -84,8 +84,8 @@ export function parseBggHotItemsResponse(xmlString: string): SearchResult[] {
       const thumbnailMatch = itemXml.match(/<thumbnail[^>]*value="([^"]*)"/)
       const rankMatch = itemXml.match(/<rank[^>]*value="(\d+)"/)
       
-      console.log('Processing item XML:', itemXml.substring(0, 200) + '...')
-      console.log('Thumbnail match:', thumbnailMatch)
+      // console.log('Processing item XML:', itemXml.substring(0, 200) + '...')
+      // console.log('Thumbnail match:', thumbnailMatch)
       
       if (idMatch && nameMatch && idMatch[1] && nameMatch[1]) {
         const result: SearchResult = {
@@ -95,7 +95,7 @@ export function parseBggHotItemsResponse(xmlString: string): SearchResult[] {
           thumbnail: thumbnailMatch?.[1] || null,
           average: null // Hot items don't include ratings
         }
-        console.log('Parsed result:', result)
+        // console.log('Parsed result:', result)
         results.push(result)
       }
     })

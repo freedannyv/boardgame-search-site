@@ -1,21 +1,24 @@
 <script setup lang="ts">
 const user = useSupabaseUser()
-const redirectInfo = useSupabaseCookieRedirect()
+const route = useRoute()
+const { ensureProfile } = useProfile()
+
+console.log('confirm route fullPath:', route.fullPath)
 
 watch(
-  user,
-  async () => {
-    if (user.value) {
-      const path = redirectInfo.pluck()
-      await navigateTo(path || '/')
-    }
+  () => user.value?.sub,
+  async (sub) => {
+    console.log('confirm watcher sub:', sub)
+
+    if (!sub) return
+
+    await ensureProfile()
+    await navigateTo('/')
   },
   { immediate: true }
 )
 </script>
 
 <template>
-  <div class="p-6">
-    Signing you in...
-  </div>
+  <div>Waiting for login...</div>
 </template>

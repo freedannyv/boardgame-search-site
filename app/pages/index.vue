@@ -36,12 +36,12 @@ const fetchHotGames = async () => {
     const { getHotItems } = useBggApi()
     
     const response = await getHotItems('boardgame')
-    console.log('BGG Hot Games Response:', response)
-    console.log('Raw XML:', response.data || response)
+    // console.log('BGG Hot Games Response:', response)
+    // console.log('Raw XML:', response.data || response)
     
     // Parse XML response and transform to game format
     const parsedGames = parseBggHotItemsResponse(response.data || response)
-    console.log('Parsed hot games:', parsedGames)
+    // console.log('Parsed hot games:', parsedGames)
     
     hotGames.value = parsedGames
   } catch (error) {

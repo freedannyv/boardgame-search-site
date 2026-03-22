@@ -71,7 +71,7 @@ async function handleSearch(query: string) {
     
     // Parse XML response and transform to SearchResult format
     const transformedResults = parseBggSearchResponse(response.data || response)
-    console.log('Parsed BGG results:', transformedResults)
+    // console.log('Parsed BGG results:', transformedResults)
     
     searchResults.value = transformedResults
   } catch (error) {
