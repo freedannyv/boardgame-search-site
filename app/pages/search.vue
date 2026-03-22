@@ -16,7 +16,7 @@ const filters = inject<Ref<Filters>>('searchFilters', ref({
 }))
 
 // Store
-const userGamesStore = useCollectionStore()
+const collectionStore = useCollectionStore()
 
 const games = ref<Game[]>([])
 const loading = ref(false)
@@ -170,11 +170,11 @@ onUnmounted(() => {
 
 // Helper functions for collection/wishlist state
 function isInCollection(gameId: string) {
-  return userGamesStore.isGameInCollection(gameId)
+  return collectionStore.isGameInCollection(gameId)
 }
 
 function isInWishlist(gameId: string) {
-  return userGamesStore.isGameInWishlist(gameId)
+  return collectionStore.isGameInWishlist(gameId)
 }
 
 function handleAddToCollection(gameId: string) {
@@ -183,15 +183,15 @@ function handleAddToCollection(gameId: string) {
 }
 
 function handleRemoveFromCollection(gameId: string) {
-  userGamesStore.removeGameFromCollection(Number(gameId))
+  collectionStore.removeGameFromCollection(Number(gameId))
 }
 
 function handleToggleWishlist(gameId: string) {
   const game = games.value.find(g => g.id === gameId)
-  if (userGamesStore.isGameInWishlist(gameId)) {
-    userGamesStore.removeGameFromWishlist(gameId)
+  if (collectionStore.isGameInWishlist(gameId)) {
+    collectionStore.removeGameFromWishlist(gameId)
   } else {
-    userGamesStore.addGameToWishlist({
+    collectionStore.addGameToWishlist({
       gameId: gameId,
       thumbnail: game?.thumbnail || null,
       image: null

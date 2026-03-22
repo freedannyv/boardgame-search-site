@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useCollectionStore } from '~/stores/useCollectionStore'
 
-const userGamesStore = useCollectionStore()
+const collectionStore = useCollectionStore()
 
 // Collection count from store
-const collectionCount = computed(() => userGamesStore.collection.length)
+const collectionCount = computed(() => collectionStore.collection.length)
 </script>
 
 <template>

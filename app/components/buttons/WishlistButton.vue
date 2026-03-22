@@ -6,22 +6,22 @@ const props = defineProps<{
   gameId: number
 }>()
 
-const userGamesStore = useCollectionStore()
-const { isLoading, isLoaded } = storeToRefs(userGamesStore)
+const collectionStore = useCollectionStore()
+const { isLoading, isLoaded } = storeToRefs(collectionStore)
 
 const isInWishlist = computed(() => {
-  return userGamesStore.isGameInWishlist(props.gameId)
+  return collectionStore.isGameInWishlist(props.gameId)
 })
 
 const isInCollection = computed(() => {
-  return userGamesStore.isGameInCollection(props.gameId)
+  return collectionStore.isGameInCollection(props.gameId)
 })
 
 function toggleWishlist() {
   if (isInWishlist.value) {
-    userGamesStore.removeGameFromWishlist(props.gameId.toString())
+    collectionStore.removeGameFromWishlist(props.gameId.toString())
   } else {
-    userGamesStore.addGameToWishlist({
+    collectionStore.addGameToWishlist({
       gameId: props.gameId.toString(),
       thumbnail: null,
       image: null

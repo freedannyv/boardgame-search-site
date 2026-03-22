@@ -24,7 +24,7 @@ const props = defineProps<{
 
 // Collection modal state
 const showCollectionModal = ref(false)
-const userGamesStore = useCollectionStore()
+const collectionStore = useCollectionStore()
 
 function handleOpenCollectionModal(gameId: number) {
   // Open the modal

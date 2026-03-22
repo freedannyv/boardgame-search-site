@@ -16,7 +16,7 @@ const route = useRoute()
 const gameId = computed(() => route.params.id as string)
 
 // Store
-const userGamesStore = useCollectionStore()
+const collectionStore = useCollectionStore()
 
 // Reactive state
 const game = ref<GameDetail | null>(null)
@@ -167,11 +167,11 @@ async function loadGame() {
 
 // Computed properties for store state
 const isInCollection = computed(() => {
-  return game.value ? userGamesStore.isGameInCollection(game.value.id) : false
+  return game.value ? collectionStore.isGameInCollection(game.value.id) : false
 })
 
 const isInWishlist = computed(() => {
-  return game.value ? userGamesStore.isGameInWishlist(game.value.id) : false
+  return game.value ? collectionStore.isGameInWishlist(game.value.id) : false
 })
 
 // Action handlers
@@ -184,16 +184,16 @@ function handleAddToCollection() {
 
 function handleRemoveFromCollection() {
   if (game.value) {
-    userGamesStore.removeGameFromCollection(Number(game.value.id))
+    collectionStore.removeGameFromCollection(Number(game.value.id))
   }
 }
 
 function handleToggleWishlist() {
   if (game.value) {
-    if (userGamesStore.isGameInWishlist(game.value.id)) {
-      userGamesStore.removeGameFromWishlist(game.value.id)
+    if (collectionStore.isGameInWishlist(game.value.id)) {
+      collectionStore.removeGameFromWishlist(game.value.id)
     } else {
-      userGamesStore.addGameToWishlist({
+      collectionStore.addGameToWishlist({
         gameId: game.value.id,
         thumbnail: game.value.thumbnail,
         image: game.value.image
@@ -209,16 +209,16 @@ function handleRecommendedAddToCollection(id: string) {
 }
 
 function handleRecommendedRemoveFromCollection(id: string) {
-  userGamesStore.removeGameFromCollection(Number(id))
+  collectionStore.removeGameFromCollection(Number(id))
 }
 
 function handleRecommendedToggleWishlist(id: string) {
   // Find the recommended game data - this would need access to the recommended games list
   // For now, we'll call without image data, but ideally this should be updated
-  if (userGamesStore.isGameInWishlist(id)) {
-    userGamesStore.removeGameFromWishlist(id)
+  if (collectionStore.isGameInWishlist(id)) {
+    collectionStore.removeGameFromWishlist(id)
   } else {
-    userGamesStore.addGameToWishlist({
+    collectionStore.addGameToWishlist({
       gameId: id,
       thumbnail: null,
       image: null

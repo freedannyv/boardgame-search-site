@@ -159,14 +159,14 @@ export const useUserGames = () => {
 
   const isInCollection = async (gameId: string): Promise<boolean> => {
     // Get the store instance
-    const userGamesStore = useCollectionStore()
+    const collectionStore = useCollectionStore()
     
     // Check if store has data and if game exists in collection
-    if (userGamesStore.collection.length === 0) {
+    if (collectionStore.collection.length === 0) {
       return false
     }
     
-    return userGamesStore.collection.some(item => item.game_id === gameId)
+    return collectionStore.collection.some(item => item.game_id === gameId)
   }
 
   const getCollection = async (): Promise<CollectionItem[]> => {

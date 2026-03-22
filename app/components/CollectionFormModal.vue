@@ -33,8 +33,8 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const userGamesStore = useCollectionStore()
-const { isLoading } = storeToRefs(userGamesStore)
+const collectionStore = useCollectionStore()
+const { isLoading } = storeToRefs(collectionStore)
 
 // Form data
 const formData = ref<FormData>({
@@ -85,7 +85,7 @@ function resetForm() {
 
 async function handleSubmit() {
   try {
-    await userGamesStore.addGameToCollection({
+    await collectionStore.addGameToCollection({
       gameId: String(props.game.id),
       condition: formData.value.condition,
       pricePaid: formData.value.pricePaid || null,

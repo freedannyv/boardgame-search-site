@@ -21,8 +21,8 @@ const props = defineProps<{
   game: Game
 }>()
 
-const userGamesStore = useCollectionStore()
-const { collection, wishlist } = storeToRefs(userGamesStore)
+const collectionStore = useCollectionStore()
+const { collection, wishlist } = storeToRefs(collectionStore)
 
 const imageUrl = computed(() => props.game.image || props.game.thumbnail || '/wingspan.webp')
 
@@ -44,11 +44,11 @@ const playTime = computed(() => {
 })
 
 const isInCollection = computed(() => {
-  return userGamesStore.isGameInCollection(props.game.id)
+  return collectionStore.isGameInCollection(props.game.id)
 })
 
 const isInWishlist = computed(() => {
-  return userGamesStore.isGameInWishlist(props.game.id)
+  return collectionStore.isGameInWishlist(props.game.id)
 })
 
 // Hide wishlist if game is in collection

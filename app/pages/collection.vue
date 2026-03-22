@@ -6,8 +6,8 @@ import { useCollectionStore } from '~/stores/useCollectionStore'
 import CompactGameRow from '~/components/CompactGameRow.vue'
 
 // Store
-const userGamesStore = useCollectionStore()
-const { collection, isLoading, isLoaded } = storeToRefs(userGamesStore)
+const collectionStore = useCollectionStore()
+const { collection, isLoading, isLoaded } = storeToRefs(collectionStore)
 
 // Local state for filters and view
 const filters = ref<CollectionFiltersType>({
@@ -49,14 +49,14 @@ const stats = computed(() => {
 // Load collection if not already loaded
 onMounted(async () => {
   if (!isLoaded.value) {
-    await userGamesStore.loadUserGames()
+    await collectionStore.loadUserGames()
   }
 })
 
 // Handle remove from collection
 async function handleRemoveFromCollection(gameId: string) {
   try {
-    await userGamesStore.removeGameFromCollection(Number(gameId))
+    await collectionStore.removeGameFromCollection(Number(gameId))
   } catch (error) {
     console.error('Failed to remove from collection:', error)
   }
