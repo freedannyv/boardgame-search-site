@@ -6,6 +6,7 @@ interface Game {
   id: number | string
   name: string
   thumbnail?: string | null
+  image?: string | null
 }
 
 interface FormData {
@@ -63,6 +64,25 @@ const conditions = [
   { value: 'used', label: 'Used' },
 ]
 
+// Reset form to default state
+function resetForm() {
+  formData.value = {
+    addedToCollectionDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
+    receivedAsGift: false,
+    pricePaid: undefined,
+    currency: 'USD',
+    condition: 'new',
+    isComplete: true,
+    missingComponents: undefined,
+    edition: undefined,
+    isSleeved: false,
+    isOrganized: false,
+    reasonForBuying: undefined,
+    receivedFrom: undefined
+  }
+  showAdditionalInfo.value = false
+}
+
 async function handleSubmit() {
   try {
     await userGamesStore.addGameToCollection({
@@ -78,16 +98,21 @@ async function handleSubmit() {
       isSleeved: formData.value.isSleeved,
       isOrganized: formData.value.isOrganized,
       reasonForBuying: formData.value.reasonForBuying || null,
-      receivedFrom: formData.value.receivedFrom || null
+      receivedFrom: formData.value.receivedFrom || null,
+      thumbnail: props.game.thumbnail || null,
+      image: props.game.image || null,
+      name: props.game.name || null
     })
   } catch (error) {
     console.error('Failed to add to collection:', error)
   } finally {
+    resetForm()
     emit('close')
   }
 }
 
 function handleCancel() {
+  resetForm()
   emit('close')
 }
 

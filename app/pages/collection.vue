@@ -1,30 +1,42 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
-import { useCollectionStore } from '~/stores/useCollectionStore'
-import { usePlaceholderGamesStore } from '~/stores/games'
+import { useUserGamesStore } from '~/stores/useUserGamesStore'
 
-// Stores
-const collectionStore = useCollectionStore()
-const placeholderGamesStore = usePlaceholderGamesStore()
+// Store
+const userGamesStore = useUserGamesStore()
+const { collection, isLoading, isLoaded } = storeToRefs(userGamesStore)
 
-// Collection games from store
-const collectionGames = computed(() => {
-  const gameIds = Array.from(collectionStore.gameIds)
-  return placeholderGamesStore.getPlaceholderGames.filter(game => 
-    gameIds.includes(Number(game.id))
-  )
+// Transform collection data for GameGrid
+const gamesForGrid = computed(() => {
+  return collection.value.map(item => ({
+    id: item.game_id,
+    name: item.name || `Game ${item.game_id}`,
+    thumbnail: item.thumbnail,
+    image: item.image,
+    average: null, // TODO: Could add rating from games table
+    minPlayers: null, // TODO: Could add from games table
+    maxPlayers: null, // TODO: Could add from games table
+    playingTime: null, // TODO: Could add from games table
+    yearPublished: null // TODO: Could add from games table
+  }))
 })
-
-// Loading state
-const loading = ref(false)
 
 // Stats based on collection
 const stats = computed(() => {
-  const total = collectionGames.value.length
+  const total = collection.value.length
   return {
     total,
-    played: Math.floor(total * 0.6), // Placeholder - would come from play history
-    unplayed: Math.ceil(total * 0.4)  // Placeholder - would come from play history
+    played: 0, // TODO: Add play tracking
+    unplayed: 0 // TODO: Add play tracking
+  }
+})
+
+// Load collection if not already loaded
+onMounted(async () => {
+  if (!isLoaded.value) {
+    await userGamesStore.loadUserGames()
   }
 })
 
@@ -44,8 +56,12 @@ const sortBy = ref<string>('name')
 const viewMode = ref<'grid' | 'list'>('grid')
 
 // Handle remove from collection
-function handleRemoveFromCollection(gameId: string) {
-  collectionStore.removeGame(Number(gameId))
+async function handleRemoveFromCollection(gameId: string) {
+  try {
+    await userGamesStore.removeGameFromCollection(Number(gameId))
+  } catch (error) {
+    console.error('Failed to remove from collection:', error)
+  }
 }
 
 // Handle filter changes from component
@@ -59,19 +75,6 @@ function handleSortChanged(newSortBy: string) {
   sortBy.value = newSortBy
   // TODO: Apply sorting to collectionGames
 }
-
-// Load collection (reactive - no async needed)
-function loadCollection() {
-  loading.value = true
-  // Collection data is now reactive from stores
-  setTimeout(() => {
-    loading.value = false
-  }, 300) // Brief loading state for UX
-}
-
-onMounted(() => {
-  loadCollection()
-})
 </script>
 
 <template>
@@ -142,27 +145,23 @@ onMounted(() => {
     <!-- Content -->
     <div class="px-4 mt-4">
       <!-- Loading state -->
-      <div v-if="loading" class="flex justify-center py-12">
-        <Icon name="mdi:loading" class="w-8 h-8 animate-spin text-indigo-600" />
+      <div v-if="isLoading" class="flex justify-center py-12">
+        <div class="text-center">
+          <Icon name="mdi:loading" class="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-2" />
+          <p class="text-gray-600 text-sm">
+            Loading collection...
+          </p>
+        </div>
       </div>
 
       <!-- Grid view -->
       <GameGrid
-        v-else-if="collectionGames?.length > 0 && viewMode === 'grid'"
-        :games="collectionGames"
+        v-else-if="gamesForGrid?.length > 0"
+        :games="gamesForGrid"
       />
 
-      <!-- List view -->
-      <div v-else-if="collectionGames?.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
-        <CompactGameRow
-          v-for="game in collectionGames"
-          :key="game.id"
-          :game="game"
-        />
-      </div>
-
       <!-- Empty state -->
-      <div v-else-if="!loading" class="text-center py-12">
+      <div v-else-if="!isLoading" class="text-center py-12">
         <Icon name="mdi:bookshelf" class="w-16 h-16 mx-auto mb-4 text-gray-300" />
         <p class="text-gray-900 font-medium text-lg">Your collection is empty</p>
         <p class="text-gray-500 mt-1">Start adding games to build your collection</p>

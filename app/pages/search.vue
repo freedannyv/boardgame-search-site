@@ -190,7 +190,8 @@ function handleRemoveFromCollection(gameId: string) {
 }
 
 function handleToggleWishlist(gameId: string) {
-  toggleWishlist(Number(gameId))
+  const game = games.value.find(g => g.id === gameId)
+  toggleWishlist(Number(gameId), game)
 }
 
 // Watch for URL query changes

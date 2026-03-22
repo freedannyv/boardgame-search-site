@@ -26,7 +26,7 @@ export function useGameActions() {
     }
   }
 
-  const toggleWishlist = async (gameId: number) => {
+  const toggleWishlist = async (gameId: number, game?: { thumbnail?: string | null; image?: string | null }) => {
     try {
       if (wishlistStore.isWishlisted(gameId)) {
         // Remove from wishlist via API
@@ -34,8 +34,12 @@ export function useGameActions() {
         // Update legacy store for immediate UI feedback
         wishlistStore.removeGame(gameId)
       } else {
-        // Add to wishlist via API
-        await userGamesStore.addGameToWishlist({ gameId: String(gameId) })
+        // Add to wishlist via API with image data
+        await userGamesStore.addGameToWishlist({ 
+          gameId: String(gameId),
+          thumbnail: game?.thumbnail || null,
+          image: game?.image || null
+        })
         // Update legacy store for immediate UI feedback
         wishlistStore.addGame(gameId)
       }

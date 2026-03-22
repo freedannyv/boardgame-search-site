@@ -34,10 +34,7 @@ export const useUserGamesStore = defineStore('userGames', () => {
 
   // ACTIONS
   const loadUserGames = async (force = false): Promise<void> => {
-    console.log('📦 loadUserGames called:', { force, isLoaded: isLoaded.value, hasLoadedOnce: hasLoadedOnce.value })
-    
     if (isLoaded.value && !force) {
-      console.log('📦 Skipping load - already loaded and not forced')
       return
     }
 
@@ -45,22 +42,11 @@ export const useUserGamesStore = defineStore('userGames', () => {
       isLoading.value = true
       error.value = null
       
-      console.log('📦 Starting to fetch collection and wishlist')
-      
       // Fetch both collection and wishlist from the composable
       const [collectionData, wishlistData] = await Promise.all([
         userGames.getCollection(),
         userGames.getWishlist()
       ])
-      
-      console.log('📦 Fetched data:', { 
-        collectionCount: collectionData.length, 
-        wishlistCount: wishlistData.length,
-        collectionGameIds: collectionData.map(item => item.game_id),
-        collectionItems: collectionData.map(item => ({ id: item.id, game_id: item.game_id })),
-        wishlistGameIds: wishlistData.map(item => item.game_id),
-        wishlistItems: wishlistData.map(item => ({ id: item.id, game_id: item.game_id }))
-      })
       
       // Set store arrays
       collection.value = collectionData
@@ -69,26 +55,16 @@ export const useUserGamesStore = defineStore('userGames', () => {
       // Set loaded states
       isLoaded.value = true
       hasLoadedOnce.value = true
-      
-      console.log('📦 Store updated successfully:', { 
-        collectionCount: collection.value.length, 
-        wishlistCount: wishlist.value.length,
-        isLoaded: isLoaded.value,
-        hasLoadedOnce: hasLoadedOnce.value
-      })
     } catch (err) {
-      console.error('📦 Error in loadUserGames:', err)
       error.value = err instanceof Error ? err.message : 'Failed to load user games'
       throw err
     } finally {
       // Clear loading state
       isLoading.value = false
-      console.log('📦 Loading state cleared')
     }
   }
 
   const resetUserGames = (): void => {
-    console.log('📦 Resetting user games store')
     // Clear collection
     collection.value = []
     // Clear wishlist
@@ -99,7 +75,6 @@ export const useUserGamesStore = defineStore('userGames', () => {
     isLoading.value = false
     // Clear error
     error.value = null
-    console.log('📦 Store reset completed')
   }
   const loadCollection = async () => {
     try {
@@ -140,10 +115,8 @@ export const useUserGamesStore = defineStore('userGames', () => {
       isLoading.value = true
       error.value = null
       
-      console.log('Adding game to collection:', input)
       // Call composable addToCollection
       const result = await userGames.addToCollection(input)
-      console.log('Added game to collection:', result)
       
       // After success, add returned item into collection
       // Avoid duplicate local entries by removing any existing item first

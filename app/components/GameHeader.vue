@@ -76,7 +76,10 @@ function handleCollectionClick() {
 }
 
 function handleWishlistClick() {
-  toggleWishlist(Number(props.game.id))
+  toggleWishlist(Number(props.game.id), {
+    thumbnail: props.game.thumbnail,
+    image: props.game.image
+  })
   emit('toggleWishlist')
 }
 

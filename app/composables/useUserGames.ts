@@ -14,6 +14,9 @@ export interface AddToCollectionInput {
   isOrganized?: boolean
   reasonForBuying?: string | null
   receivedFrom?: string | null
+  thumbnail?: string | null
+  image?: string | null
+  name?: string | null
 }
 
 export interface CollectionItem {
@@ -33,12 +36,18 @@ export interface CollectionItem {
   reason_for_buying: string | null
   received_from: string | null
   created_at: string
-  updated_at: string
+  updated_at: string,
+  thumbnail?: string | null
+  image?: string | null,
+  name: string | null
 }
 
 export interface AddToWishlistInput {
   gameId: string
   notes?: string | null
+  thumbnail?: string | null
+  image?: string | null
+  name?: string | null
 }
 
 export interface WishlistItem {
@@ -48,6 +57,9 @@ export interface WishlistItem {
   notes: string | null
   created_at: string
   updated_at: string
+  thumbnail?: string | null
+  image?: string | null
+  name?: string | null
 }
 
 export const useUserGames = () => {
@@ -61,7 +73,6 @@ export const useUserGames = () => {
 
   const getCurrentUserId = (): string => {
     const userId = user.value?.sub
-    console.log('🔍 getCurrentUserId called:', { userId, hasUser: !!user.value, userSub: user.value?.sub })
     if (!userId) {
       throw new Error('No user is currently logged in')
     }
@@ -71,8 +82,6 @@ export const useUserGames = () => {
   // COLLECTION FUNCTIONS
   const addToCollection = async (input: AddToCollectionInput): Promise<CollectionItem> => {
     const userId = getCurrentUserId()
-
-    console.log('Adding to collection', input)
     
     // Validation: if game is incomplete, missing components must be specified
     if (input.isComplete === false && (!input.missingComponents || input.missingComponents.trim() === '')) {
@@ -86,6 +95,7 @@ export const useUserGames = () => {
     }
 
     try {
+      // 1. Send request to database
       const { data, error } = await supabase
         .from('user_collection')
         .insert({
@@ -102,7 +112,10 @@ export const useUserGames = () => {
           is_sleeved: input.isSleeved || false,
           is_organized: input.isOrganized || false,
           reason_for_buying: input.reasonForBuying ?? null,
-          received_from: input.receivedFrom ?? null
+          received_from: input.receivedFrom ?? null,
+          thumbnail: input.thumbnail ?? null,
+          image: input.image ?? null,
+          name: input.name ?? null
         })
         .select()
         .single()
@@ -115,9 +128,9 @@ export const useUserGames = () => {
         throw error
       }
 
+      // Return the response data (store will be updated by the store function)
       return data
     } catch (error) {
-      console.log('the whole error', error)
       if (error instanceof Error) {
         throw error
       }
@@ -128,38 +141,36 @@ export const useUserGames = () => {
   const removeFromCollection = async (gameId: string): Promise<void> => {
     const userId = getCurrentUserId()
 
-    const { error } = await supabase
-      .from('user_collection')
-      .delete()
-      .eq('user_id', userId)
-      .eq('game_id', gameId)
+    try {
+      // 1. Send request to database
+      const { error } = await supabase
+        .from('user_collection')
+        .delete()
+        .eq('user_id', userId)
+        .eq('game_id', gameId)
 
-    if (error) {
-      throw new Error(`Failed to remove game from collection: ${error.message}`)
+      if (error) {
+        throw new Error(`Failed to remove game from collection: ${error.message}`)
+      }
+    } catch (error) {
+      throw error
     }
   }
 
   const isInCollection = async (gameId: string): Promise<boolean> => {
-    const userId = getCurrentUserId()
-
-    const { data, error } = await supabase
-      .from('user_collection')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('game_id', gameId)
-      .maybeSingle()
-
-    if (error) {
-      throw new Error(`Failed to check if game is in collection: ${error.message}`)
+    // Get the store instance
+    const userGamesStore = useUserGamesStore()
+    
+    // Check if store has data and if game exists in collection
+    if (userGamesStore.collection.length === 0) {
+      return false
     }
-
-    return !!data
+    
+    return userGamesStore.collection.some(item => item.game_id === gameId)
   }
 
   const getCollection = async (): Promise<CollectionItem[]> => {
-    console.log('🔍 getCollection called')
     const userId = getCurrentUserId()
-    console.log('🔍 Fetching collection for userId:', userId)
 
     const { data, error } = await supabase
       .from('user_collection')
@@ -168,11 +179,9 @@ export const useUserGames = () => {
       .order('added_to_collection_date', { ascending: false })
 
     if (error) {
-      console.error('🔍 Error fetching collection:', error)
       throw new Error(`Failed to fetch collection: ${error.message}`)
     }
 
-    console.log('🔍 Collection fetched successfully:', { count: data?.length || 0, items: data })
     return data || []
   }
 
@@ -262,9 +271,7 @@ export const useUserGames = () => {
   }
 
   const getWishlist = async (): Promise<WishlistItem[]> => {
-    console.log('🔍 getWishlist called')
     const userId = getCurrentUserId()
-    console.log('🔍 Fetching wishlist for userId:', userId)
 
     const { data, error } = await supabase
       .from('user_wishlist')
@@ -273,11 +280,9 @@ export const useUserGames = () => {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('🔍 Error fetching wishlist:', error)
       throw new Error(`Failed to fetch wishlist: ${error.message}`)
     }
 
-    console.log('🔍 Wishlist fetched successfully:', { count: data?.length || 0, items: data })
     return data || []
   }
 

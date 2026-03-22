@@ -16,26 +16,11 @@ const { isLoading, isLoaded } = storeToRefs(userGamesStore)
 
 const isInCollection = ref(false)
 
-// Watch for store to be loaded and game ID changes
-watch([isLoaded, () => props.gameId], () => {
-  if (isLoaded.value) {
-    const result = userGamesStore.isGameInCollection(props.gameId)
-    console.log('🎯 CollectionButton check:', { 
-      gameId: props.gameId, 
-      gameIdString: props.gameId.toString(),
-      isInCollection: result,
-      storeCollectionCount: userGamesStore.collection.length,
-      storeCollectionGameIds: Array.from(userGamesStore.collectionGameIds),
-      checkingGameId: props.gameId,
-      checkingGameIdString: props.gameId.toString(),
-      hasGameIdInStore: userGamesStore.collectionGameIds.has(props.gameId.toString()),
-      isLoaded: isLoaded.value
-    })
-    isInCollection.value = result
-  } else {
-    isInCollection.value = false
-  }
-}, { immediate: true })
+// Watch for collection changes and game ID changes
+watch([() => userGamesStore.collection, () => props.gameId], () => {
+  const result = userGamesStore.isGameInCollection(props.gameId)
+  isInCollection.value = result
+}, { immediate: true, deep: true })
 
 async function toggleCollection() {
   if (isInCollection.value) {

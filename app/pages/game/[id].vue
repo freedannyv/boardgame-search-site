@@ -193,7 +193,10 @@ function handleRemoveFromCollection() {
 
 function handleToggleWishlist() {
   if (game.value) {
-    toggleWishlist(Number(game.value.id))
+    toggleWishlist(Number(game.value.id), {
+      thumbnail: game.value.thumbnail,
+      image: game.value.image
+    })
   }
 }
 
@@ -207,6 +210,8 @@ function handleRecommendedRemoveFromCollection(id: string) {
 }
 
 function handleRecommendedToggleWishlist(id: string) {
+  // Find the recommended game data - this would need access to the recommended games list
+  // For now, we'll call without image data, but ideally this should be updated
   toggleWishlist(Number(id))
 }
 
