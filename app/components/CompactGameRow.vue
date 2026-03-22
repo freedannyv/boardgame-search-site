@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import { useCollectionStore } from '~/stores/useCollectionStore'
 import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
 import LogPlayButton from './LogPlayButton.vue'
@@ -21,7 +21,7 @@ const props = defineProps<{
   game: Game
 }>()
 
-const userGamesStore = useUserGamesStore()
+const userGamesStore = useCollectionStore()
 const { collection, wishlist } = storeToRefs(userGamesStore)
 
 const imageUrl = computed(() => props.game.image || props.game.thumbnail || '/wingspan.webp')

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseModal from './BaseModal.vue'
-import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import { useCollectionStore } from '~/stores/useCollectionStore'
 
 interface Game {
   id: number | string
@@ -33,7 +33,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const userGamesStore = useUserGamesStore()
+const userGamesStore = useCollectionStore()
 const { isLoading } = storeToRefs(userGamesStore)
 
 // Form data

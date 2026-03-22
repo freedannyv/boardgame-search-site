@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import { useCollectionStore } from '~/stores/useCollectionStore'
+import { useSupabaseUser } from '#imports'
 
 const props = defineProps<{
   gameId: number
@@ -11,21 +12,33 @@ const emit = defineEmits<{
   openCollectionModal: [gameId: number]
 }>()
 
-const userGamesStore = useUserGamesStore()
-const { isLoading, isLoaded } = storeToRefs(userGamesStore)
+const user = useSupabaseUser()
+const collectionStore = useCollectionStore()
+const { isLoading, isLoaded } = storeToRefs(collectionStore)
 
 const isInCollection = ref(false)
 
+// Load data if not already loaded when component mounts and user is authenticated
+onMounted(async () => {
+  if (user.value?.id && !isLoaded.value && !isLoading.value) {
+    try {
+      await collectionStore.loadUserGames()
+    } catch (error) {
+      console.error('Failed to load user games:', error)
+    }
+  }
+})
+
 // Watch for collection changes and game ID changes
-watch([() => userGamesStore.collection, () => props.gameId], () => {
-  const result = userGamesStore.isGameInCollection(props.gameId)
+watch([() => collectionStore.collection, () => props.gameId], () => {
+  const result = collectionStore.isGameInCollection(props.gameId)
   isInCollection.value = result
 }, { immediate: true, deep: true })
 
 async function toggleCollection() {
   if (isInCollection.value) {
     try {
-      await userGamesStore.removeGameFromCollection(props.gameId)
+      await collectionStore.removeGameFromCollection(props.gameId)
     } catch (error) {
       console.error('Failed to remove from collection:', error)
     }

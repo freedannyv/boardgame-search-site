@@ -2,8 +2,6 @@
 import type { Game } from '~/components/GameCard.vue'
 import type { Filters } from '~/components/FilterDrawer.vue'
 import { useCollectionStore } from '../stores/useCollectionStore'
-import { useWishlistStore } from '../stores/useWishlistStore'
-import { useGameActions } from '~/composables/useGameActions'
 
 const route = useRoute()
 
@@ -17,10 +15,8 @@ const filters = inject<Ref<Filters>>('searchFilters', ref({
   minRating: 0
 }))
 
-// Stores
-const collectionStore = useCollectionStore()
-const wishlistStore = useWishlistStore()
-const { toggleCollection, toggleWishlist } = useGameActions()
+// Store
+const userGamesStore = useCollectionStore()
 
 const games = ref<Game[]>([])
 const loading = ref(false)
@@ -174,24 +170,33 @@ onUnmounted(() => {
 
 // Helper functions for collection/wishlist state
 function isInCollection(gameId: string) {
-  return collectionStore.isOwned(Number(gameId))
+  return userGamesStore.isGameInCollection(gameId)
 }
 
 function isInWishlist(gameId: string) {
-  return wishlistStore.isWishlisted(Number(gameId))
+  return userGamesStore.isGameInWishlist(gameId)
 }
 
 function handleAddToCollection(gameId: string) {
-  toggleCollection(Number(gameId))
+  // For now just log - collection modal would be needed
+  console.log('Collection modal would open for game:', gameId)
 }
 
 function handleRemoveFromCollection(gameId: string) {
-  toggleCollection(Number(gameId))
+  userGamesStore.removeGameFromCollection(Number(gameId))
 }
 
 function handleToggleWishlist(gameId: string) {
   const game = games.value.find(g => g.id === gameId)
-  toggleWishlist(Number(gameId), game)
+  if (userGamesStore.isGameInWishlist(gameId)) {
+    userGamesStore.removeGameFromWishlist(gameId)
+  } else {
+    userGamesStore.addGameToWishlist({
+      gameId: gameId,
+      thumbnail: game?.thumbnail || null,
+      image: null
+    })
+  }
 }
 
 // Watch for URL query changes

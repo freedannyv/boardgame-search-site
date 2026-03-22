@@ -1,43 +1,49 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useWishlistStore } from '~/stores/useWishlistStore'
 import { useCollectionStore } from '~/stores/useCollectionStore'
 
 const props = defineProps<{
   gameId: number
 }>()
 
-const wishlistStore = useWishlistStore()
-const { isWishlisted } = storeToRefs(wishlistStore)
+const userGamesStore = useCollectionStore()
+const { isLoading, isLoaded } = storeToRefs(userGamesStore)
 
-const collectionStore = useCollectionStore()
-const { isOwned } = storeToRefs(collectionStore)
+const isInWishlist = computed(() => {
+  return userGamesStore.isGameInWishlist(props.gameId)
+})
 
+const isInCollection = computed(() => {
+  return userGamesStore.isGameInCollection(props.gameId)
+})
 
 function toggleWishlist() {
-  if (isWishlisted.value(props.gameId)) {
-    wishlistStore.removeGame(props.gameId)
+  if (isInWishlist.value) {
+    userGamesStore.removeGameFromWishlist(props.gameId.toString())
   } else {
-    wishlistStore.addGame(props.gameId)
+    userGamesStore.addGameToWishlist({
+      gameId: props.gameId.toString(),
+      thumbnail: null,
+      image: null
+    })
   }
 }
 </script>
-
 <template>
   <button
-    v-if="!isOwned(props.gameId)"
+    v-if="!isInCollection"
     type="button"
     @click="toggleWishlist"
     :class="[
       'w-9 h-9 flex items-center justify-center rounded-full transition-colors',
-      isWishlisted(props.gameId) 
+      isInWishlist 
         ? 'bg-red-100 text-red-600 hover:bg-red-200' 
         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
     ]"
-    :title="isWishlisted(props.gameId) ? 'Remove from wishlist' : 'Add to wishlist'"
+    :title="isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'"
   >
     <Icon 
-      :name="isWishlisted(props.gameId) ? 'mdi:heart' : 'mdi:heart-outline'" 
+      :name="isInWishlist ? 'mdi:heart' : 'mdi:heart-outline'" 
       class="w-5 h-5"
     />
   </button>

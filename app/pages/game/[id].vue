@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { Game } from '~/components/GameCard.vue'
 import { useCollectionStore } from '~/stores/useCollectionStore'
-import { useWishlistStore } from '~/stores/useWishlistStore'
-import { useGameActions } from '~/composables/useGameActions'
 import { useBggApi } from '~/composables/useBggApi'
 import { parseBggThingResponse, parseBggExpansionsResponse, extractExpansionIds } from '~/utils/bggParser'
 
@@ -17,10 +15,8 @@ interface GameDetail extends Game {
 const route = useRoute()
 const gameId = computed(() => route.params.id as string)
 
-// Stores
-const collectionStore = useCollectionStore()
-const wishlistStore = useWishlistStore()
-const { toggleCollection, toggleWishlist } = useGameActions()
+// Store
+const userGamesStore = useCollectionStore()
 
 // Reactive state
 const game = ref<GameDetail | null>(null)
@@ -171,48 +167,63 @@ async function loadGame() {
 
 // Computed properties for store state
 const isInCollection = computed(() => {
-  return game.value ? collectionStore.isOwned(Number(game.value.id)) : false
+  return game.value ? userGamesStore.isGameInCollection(game.value.id) : false
 })
 
 const isInWishlist = computed(() => {
-  return game.value ? wishlistStore.isWishlisted(Number(game.value.id)) : false
+  return game.value ? userGamesStore.isGameInWishlist(game.value.id) : false
 })
 
 // Action handlers
 function handleAddToCollection() {
   if (game.value) {
-    toggleCollection(Number(game.value.id))
+    // For now just log - collection modal would be needed
+    console.log('Collection modal would open for game:', game.value.id)
   }
 }
 
 function handleRemoveFromCollection() {
   if (game.value) {
-    toggleCollection(Number(game.value.id))
+    userGamesStore.removeGameFromCollection(Number(game.value.id))
   }
 }
 
 function handleToggleWishlist() {
   if (game.value) {
-    toggleWishlist(Number(game.value.id), {
-      thumbnail: game.value.thumbnail,
-      image: game.value.image
-    })
+    if (userGamesStore.isGameInWishlist(game.value.id)) {
+      userGamesStore.removeGameFromWishlist(game.value.id)
+    } else {
+      userGamesStore.addGameToWishlist({
+        gameId: game.value.id,
+        thumbnail: game.value.thumbnail,
+        image: game.value.image
+      })
+    }
   }
 }
 
 // Recommended game handlers
 function handleRecommendedAddToCollection(id: string) {
-  toggleCollection(Number(id))
+  // For now just log - collection modal would be needed
+  console.log('Collection modal would open for game:', id)
 }
 
 function handleRecommendedRemoveFromCollection(id: string) {
-  toggleCollection(Number(id))
+  userGamesStore.removeGameFromCollection(Number(id))
 }
 
 function handleRecommendedToggleWishlist(id: string) {
   // Find the recommended game data - this would need access to the recommended games list
   // For now, we'll call without image data, but ideally this should be updated
-  toggleWishlist(Number(id))
+  if (userGamesStore.isGameInWishlist(id)) {
+    userGamesStore.removeGameFromWishlist(id)
+  } else {
+    userGamesStore.addGameToWishlist({
+      gameId: id,
+      thumbnail: null,
+      image: null
+    })
+  }
 }
 
 // Format game data for GameHeader

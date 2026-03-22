@@ -3,7 +3,7 @@ import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
 import LogPlayButton from './LogPlayButton.vue'
 import CollectionFormModal from './CollectionFormModal.vue'
-import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import { useCollectionStore } from '~/stores/useCollectionStore'
 
 export interface Game {
   id: string
@@ -24,7 +24,7 @@ const props = defineProps<{
 
 // Collection modal state
 const showCollectionModal = ref(false)
-const userGamesStore = useUserGamesStore()
+const userGamesStore = useCollectionStore()
 
 function handleOpenCollectionModal(gameId: number) {
   // Open the modal

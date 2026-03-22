@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import type { Game } from '~/components/GameCard.vue'
-import type { CollectionFiltersType } from '~/components/CollectionFilters.vue'
-import { useCollectionStore } from '~/stores/useCollectionStore'
+import type { CollectionFiltersType } from '~/components/CollectionControls.vue'
 import { useWishlistStore } from '~/stores/useWishlistStore'
 import { usePlaceholderGamesStore } from '~/stores/games'
 
-// Stores
-const collectionStore = useCollectionStore()
+// Store
 const wishlistStore = useWishlistStore()
 const placeholderGamesStore = usePlaceholderGamesStore()
 
@@ -58,6 +55,11 @@ function handleSortChanged(newSortBy: string) {
   // TODO: Apply sorting to wishlistGames
 }
 
+// Handle view mode changes
+function handleViewModeChanged(newViewMode: 'grid' | 'list') {
+  viewMode.value = newViewMode
+}
+
 // Load wishlist (reactive - no async needed)
 function loadWishlist() {
   loading.value = true
@@ -102,39 +104,13 @@ onMounted(() => {
 
     <!-- Filters & Sort Bar -->
     <div class="sticky top-14 z-20 bg-white border-b border-gray-100 px-4 py-3 mt-4">
-      <div class="flex items-center justify-between gap-3">
-        <!-- Collection Filters Component -->
-        <CollectionFilters 
-          :filters="filters" 
-          @filters-changed="handleFiltersChanged"
-        />
-
-        <div class="flex items-center gap-2">
-          <!-- Sort dropdown -->
-          <CollectionSort 
-            :sort-by="sortBy" 
-            @sort-changed="handleSortChanged" 
-          />
-
-          <!-- View toggle -->
-          <div class="flex items-center bg-gray-100 rounded-lg p-1">
-            <button
-              @click="viewMode = 'grid'"
-              class="p-2 rounded-md transition-colors"
-              :class="viewMode === 'grid' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-            >
-              <Icon name="mdi:view-grid" class="w-5 h-5" />
-            </button>
-            <button
-              @click="viewMode = 'list'"
-              class="p-2 rounded-md transition-colors"
-              :class="viewMode === 'list' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-            >
-              <Icon name="mdi:view-list" class="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Collection Controls -->
+      <CollectionControls
+        @filters-changed="handleFiltersChanged"
+        @sort-changed="handleSortChanged"
+        @view-mode-changed="handleViewModeChanged"
+        class="mt-6"
+      />
     </div>
 
     <!-- Content -->
@@ -146,12 +122,12 @@ onMounted(() => {
 
       <!-- Grid view -->
       <GameGrid
-        v-else-if="wishlistGames.length > 0 && viewMode === 'grid'"
+        v-else-if="viewMode === 'grid' && wishlistGames.length > 0"
         :games="wishlistGames"
       />
 
       <!-- List view -->
-      <div v-else-if="wishlistGames.length > 0 && viewMode === 'list'" class="-mx-4 bg-white">
+      <div v-else-if="viewMode === 'list' && wishlistGames.length > 0" class="-mx-4 bg-white">
         <CompactGameRow
           v-for="game in wishlistGames"
           :key="game.id"

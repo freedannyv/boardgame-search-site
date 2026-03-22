@@ -2,11 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { CollectionFiltersType } from '~/components/CollectionControls.vue'
-import { useUserGamesStore } from '~/stores/useUserGamesStore'
+import { useCollectionStore } from '~/stores/useCollectionStore'
 import CompactGameRow from '~/components/CompactGameRow.vue'
 
 // Store
-const userGamesStore = useUserGamesStore()
+const userGamesStore = useCollectionStore()
 const { collection, isLoading, isLoaded } = storeToRefs(userGamesStore)
 
 // Local state for filters and view

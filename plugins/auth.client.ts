@@ -1,6 +1,6 @@
 export default defineNuxtPlugin(() => {
   const { auth } = useSupabaseClient()
-  const userGamesStore = useUserGamesStore()
+  const userGamesStore = useCollectionStore()
 
   console.log('🔐 Auth plugin initialized')
 

@@ -4,10 +4,6 @@ import type { SearchResult } from '~/components/SearchBar.vue'
 import GlobalToast from '~/components/GlobalToast.vue'
 import { useBggApi } from '~/composables/useBggApi'
 import { parseBggSearchResponse } from '~/utils/bggParser'
-import { useStoreRehydration } from '~/composables/useStoreRehydration'
-
-// Initialize store rehydration
-useStoreRehydration()
 
 const route = useRoute()
 const router = useRouter()
