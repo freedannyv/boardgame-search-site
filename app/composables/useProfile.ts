@@ -25,6 +25,9 @@ export const useProfile = () => {
     if (!data) {
       const { data: authUserData, error: authUserError } = await supabase.auth.getUser()
 
+      console.log('user', authUserData)
+      console.log('auth error', authUserError)
+
       if (authUserError) {
         console.error('Error fetching auth user:', authUserError)
         return

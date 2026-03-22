@@ -3,6 +3,7 @@ import CollectionButton from './buttons/CollectionButton.vue'
 import WishlistButton from './buttons/WishlistButton.vue'
 import LogPlayButton from './LogPlayButton.vue'
 import CollectionFormModal from './CollectionFormModal.vue'
+import { useUserGamesStore } from '~/stores/useUserGamesStore'
 
 export interface Game {
   id: string
@@ -23,20 +24,15 @@ const props = defineProps<{
 
 // Collection modal state
 const showCollectionModal = ref(false)
+const userGamesStore = useUserGamesStore()
 
 function handleOpenCollectionModal(gameId: number) {
-  // For now, just open the modal
+  // Open the modal
   showCollectionModal.value = true
 }
 
 function handleCloseCollectionModal() {
   showCollectionModal.value = false
-}
-
-function handleSaveToCollection(data: any) {
-  console.log('Game added to collection:', data)
-  // TODO: Save to API/collection store
-  handleCloseCollectionModal()
 }
 
 const hasImage = computed(() => {
@@ -150,7 +146,6 @@ const playtime = computed(() => {
       :show="showCollectionModal"
       :game="{ id: Number(game.id), name: game.name, thumbnail: game.thumbnail }"
       @close="handleCloseCollectionModal"
-      @save="handleSaveToCollection"
     />
   </div>
 </template>

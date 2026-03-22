@@ -21,7 +21,7 @@ export type Database = {
           currency: string | null
           displayname: string | null
           id: string
-          usename: string | null
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -29,7 +29,7 @@ export type Database = {
           currency?: string | null
           displayname?: string | null
           id?: string
-          usename?: string | null
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -37,7 +37,7 @@ export type Database = {
           currency?: string | null
           displayname?: string | null
           id?: string
-          usename?: string | null
+          username?: string | null
         }
         Relationships: []
       }

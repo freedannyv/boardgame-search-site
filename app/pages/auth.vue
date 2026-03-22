@@ -85,7 +85,6 @@ const signInWithGoogle = async () => {
     },
   })
 
-  console.log('sign in response ', reponse)
   return reponse
 }
 </script>

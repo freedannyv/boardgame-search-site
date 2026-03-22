@@ -3,8 +3,6 @@ const user = useSupabaseUser()
 const route = useRoute()
 const { ensureProfile } = useProfile()
 
-console.log('confirm route fullPath:', route.fullPath)
-
 watch(
   () => user.value?.sub,
   async (sub) => {

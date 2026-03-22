@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseModal from './BaseModal.vue'
+import { useUserGamesStore } from '~/stores/useUserGamesStore'
 
 interface Game {
   id: number | string
@@ -29,8 +30,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  save: [data: FormData]
 }>()
+
+const userGamesStore = useUserGamesStore()
+const { isLoading } = storeToRefs(userGamesStore)
 
 // Form data
 const formData = ref<FormData>({
@@ -39,7 +42,7 @@ const formData = ref<FormData>({
   pricePaid: undefined,
   currency: 'USD',
   condition: 'new',
-  isComplete: false,
+  isComplete: true,
   missingComponents: undefined,
   edition: undefined,
   isSleeved: false,
@@ -60,9 +63,28 @@ const conditions = [
   { value: 'used', label: 'Used' },
 ]
 
-function handleSubmit() {
-  emit('save', formData.value)
-  emit('close')
+async function handleSubmit() {
+  try {
+    await userGamesStore.addGameToCollection({
+      gameId: String(props.game.id),
+      condition: formData.value.condition,
+      pricePaid: formData.value.pricePaid || null,
+      currency: formData.value.currency || null,
+      receivedAsGift: formData.value.receivedAsGift,
+      addedToCollectionDate: formData.value.addedToCollectionDate,
+      isComplete: formData.value.isComplete,
+      missingComponents: formData.value.missingComponents || null,
+      edition: formData.value.edition || null,
+      isSleeved: formData.value.isSleeved,
+      isOrganized: formData.value.isOrganized,
+      reasonForBuying: formData.value.reasonForBuying || null,
+      receivedFrom: formData.value.receivedFrom || null
+    })
+  } catch (error) {
+    console.error('Failed to add to collection:', error)
+  } finally {
+    emit('close')
+  }
 }
 
 function handleCancel() {
@@ -187,17 +209,19 @@ function toggleAdditionalInfo() {
               type="checkbox"
               class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
             />
-            <span class="text-gray-700 font-medium">Missing Components?</span>
+            <span class="text-gray-700 font-medium">Complete?</span>
           </label>
         </div>
 
         <!-- Missing Components -->
-        <div v-if="formData.isComplete">
+        <div v-if="!formData.isComplete">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Missing Components</label>
           <textarea
             v-model="formData.missingComponents"
             rows="3"
-            placeholder="Note any missing components..."
+            placeholder="Please specify which components are missing..."
             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none"
+            required
           />
         </div>
 
@@ -259,9 +283,14 @@ function toggleAdditionalInfo() {
         </button>
         <button
           type="submit"
-          class="flex-1 px-6 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
+          :disabled="isLoading"
+          class="flex-1 px-6 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add to Collection
+          <span v-if="isLoading" class="flex items-center justify-center gap-2">
+            <Icon name="mdi:loading" class="w-4 h-4 animate-spin" />
+            Adding...
+          </span>
+          <span v-else>Add to Collection</span>
         </button>
       </div>
     </form>
