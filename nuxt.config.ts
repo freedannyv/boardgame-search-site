@@ -14,13 +14,17 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase'
   ],
   runtimeConfig: {
-    databaseUrl: '',
+    // Private keys (only available on server-side)
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+    databaseUrl: process.env.DATABASE_URL,
     bggApiToken: process.env.BGG_API_TOKEN,
+    
     public: {
+      // Public keys (exposed to client-side)
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_ANON_KEY,
       BGG_API_TOKEN: process.env.BGG_API_TOKEN,
-      supabaseUrl: '',
-      supabaseKey: '',
-
     }
   },
 

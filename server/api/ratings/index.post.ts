@@ -20,25 +20,48 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Rating must be between 1 and 10' })
   }
 
+  // Create Supabase client
+  const config = useRuntimeConfig(event)
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabase = createClient(
+    config.public.supabase.url,
+    config.public.supabase.key
+  )
+
   // Verify user exists
-  const user = await prisma.user.findUnique({ where: { id: body.userId } })
-  if (!user) {
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', body.userId)
+    .single()
+
+  if (userError || !user) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
   // Verify game exists
-  const game = await prisma.game.findUnique({ where: { id: body.gameId } })
-  if (!game) {
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('id')
+    .eq('id', body.gameId)
+    .single()
+
+  if (gameError || !game) {
     throw createError({ statusCode: 404, message: 'Game not found' })
   }
 
   // Check play count requirement
-  const playCount = await prisma.play.count({
-    where: {
-      userId: body.userId,
-      gameId: body.gameId
-    }
-  })
+  const { data: plays, error: playsError } = await supabase
+    .from('plays')
+    .select('id')
+    .eq('user_id', body.userId)
+    .eq('game_id', body.gameId)
+
+  if (playsError) {
+    throw createError({ statusCode: 500, message: 'Failed to check plays' })
+  }
+
+  const playCount = plays?.length || 0
 
   if (playCount < MIN_PLAYS_REQUIRED) {
     throw createError({
@@ -47,28 +70,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const gameRating = await prisma.gameRating.upsert({
-    where: {
-      userId_gameId: {
-        userId: body.userId,
-        gameId: body.gameId
-      }
-    },
-    update: {
+  // Create or update rating
+  const { data: gameRating, error: ratingError } = await supabase
+    .from('game_ratings')
+    .upsert({
+      user_id: body.userId,
+      game_id: body.gameId,
       rating,
-      review: body.review ?? null
-    },
-    create: {
-      userId: body.userId,
-      gameId: body.gameId,
-      rating,
-      review: body.review ?? null
-    },
-    include: {
-      game: { select: { id: true, name: true } },
-      user: { select: { id: true, username: true } }
-    }
-  })
+      review: body.review ?? null,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'user_id,game_id'
+    })
+    .select(`
+      *,
+      games(id, name),
+      users(id, username)
+    `)
+    .single()
+
+  if (ratingError) {
+    throw createError({ statusCode: 500, message: 'Failed to save rating', data: ratingError })
+  }
 
   return { rating: gameRating }
 })

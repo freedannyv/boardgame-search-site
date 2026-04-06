@@ -170,7 +170,6 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     closeSessionModal
   }
 }, {
-  // @ts-expect-error - persist is provided by pinia-plugin-persistedstate
   persist: {
     pick: ['activeSession'] // Only persist session data, not UI state
   }

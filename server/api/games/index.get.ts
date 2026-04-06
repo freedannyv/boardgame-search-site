@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const page = Number(query.page) || 1
   const limit = Math.min(Number(query.limit) || 20, 100)
-  const skip = (page - 1) * limit
+  const start = (page - 1) * limit
   const sortBy = query.sortBy as string || 'name'
   const search = query.q as string || ''
   
@@ -11,54 +11,82 @@ export default defineEventHandler(async (event) => {
   const minRating = query.minRating ? Number(query.minRating) : null
   const playTime = query.playTime as string || null
 
-  // Build orderBy based on sortBy parameter
-  let orderBy: Record<string, 'asc' | 'desc'> = { name: 'asc' }
-  if (sortBy === 'rank') orderBy = { rank: 'asc' }
-  else if (sortBy === 'rating') orderBy = { average: 'desc' }
-  else if (sortBy === 'newest') orderBy = { yearPublished: 'desc' }
+  // Create Supabase client manually for server-side
+  const config = useRuntimeConfig(event)
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabase = createClient(
+    config.public.supabase.url,
+    config.public.supabase.key,
+    {
+      auth: {
+        persistSession: false
+      }
+    }
+  )
 
-  // Build where clause for search and filters
-  const where: Record<string, any> = {}
-  
+  // Build query
+  let queryBuilder = supabase
+    .from('games')
+    .select(`
+      *,
+      game_mechanic_joins(
+        game_mechanics(id, bgg_id, name)
+      ),
+      game_category_joins(
+        game_categories(id, bgg_id, name)
+      )
+    `, { count: 'exact' })
+
+  // Apply search filter
   if (search) {
-    where.name = { contains: search, mode: 'insensitive' }
+    queryBuilder = queryBuilder.ilike('name', `%${search}%`)
   }
   
+  // Apply player count filter
   if (playerCount) {
-    where.minPlayers = { lte: playerCount }
-    where.maxPlayers = { gte: playerCount }
+    queryBuilder = queryBuilder
+      .lte('min_players', playerCount)
+      .gte('max_players', playerCount)
   }
   
+  // Apply rating filter
   if (minRating && minRating > 0) {
-    where.average = { gte: minRating }
+    queryBuilder = queryBuilder.gte('average', minRating)
   }
   
+  // Apply play time filter
   if (playTime) {
-    if (playTime === '< 30 min') where.playingTime = { lt: 30 }
-    else if (playTime === '30-60 min') where.playingTime = { gte: 30, lte: 60 }
-    else if (playTime === '1-2 hours') where.playingTime = { gte: 60, lte: 120 }
-    else if (playTime === '2+ hours') where.playingTime = { gt: 120 }
+    if (playTime === '< 30 min') queryBuilder = queryBuilder.lt('playing_time', 30)
+    else if (playTime === '30-60 min') queryBuilder = queryBuilder.gte('playing_time', 30).lte('playing_time', 60)
+    else if (playTime === '1-2 hours') queryBuilder = queryBuilder.gte('playing_time', 60).lte('playing_time', 120)
+    else if (playTime === '2+ hours') queryBuilder = queryBuilder.gt('playing_time', 120)
   }
 
-  const [games, totalResults] = await Promise.all([
-    prisma.game.findMany({
-      where,
-      skip,
-      take: limit,
-      include: {
-        mechanics: { include: { mechanic: true } },
-        categories: { include: { category: true } }
-      },
-      orderBy
-    }),
-    prisma.game.count({ where })
-  ])
+  // Apply sorting
+  if (sortBy === 'rank') queryBuilder = queryBuilder.order('rank', { ascending: true })
+  else if (sortBy === 'rating') queryBuilder = queryBuilder.order('average', { ascending: false })
+  else if (sortBy === 'newest') queryBuilder = queryBuilder.order('year_published', { ascending: false })
+  else queryBuilder = queryBuilder.order('name', { ascending: true })
 
+  // Apply pagination
+  queryBuilder = queryBuilder.range(start, start + limit - 1)
+
+  const { data: games, error, count } = await queryBuilder
+
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch games',
+      data: error
+    })
+  }
+
+  const totalResults = count || 0
   const totalPages = Math.ceil(totalResults / limit)
   const nextPage = page < totalPages ? page + 1 : null
 
   return {
-    games,
+    games: games || [],
     totalResults,
     nextPage,
     currentPage: page,
