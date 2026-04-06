@@ -13,16 +13,21 @@ export default defineNuxtConfig({
     'pinia-plugin-persistedstate/nuxt',
     '@nuxtjs/supabase'
   ],
-  runtimeConfig: {
-    databaseUrl: '',
-    bggApiToken: process.env.BGG_API_TOKEN,
-    public: {
-      BGG_API_TOKEN: process.env.BGG_API_TOKEN,
-      supabaseUrl: '',
-      supabaseKey: '',
 
-    }
-  },
+runtimeConfig: {
+  // Private (server only)
+  supabaseServiceKey: '',
+  bggApiToken: '',
+  bggUsername: '',
+  bggPassword: '',
+
+  public: {
+    supabaseUrl: '',
+    supabaseKey: '',
+    environment: 'development',
+    netlifyContext: 'development',
+  }
+},
 
   supabase: {
     types: false,
@@ -30,7 +35,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/auth',
       callback: '/confirm',
-      exclude: ['/', '/reset', '/update'], // Add public routes here
+      exclude: ['/', '/reset', '/update'],
       saveRedirectToCookie: true,
     },
   },

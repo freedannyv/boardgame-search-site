@@ -1,13 +1,16 @@
 import 'dotenv/config'
 import axios from 'axios'
 import { parseStringPromise } from 'xml2js'
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
+import { createClient } from '@supabase/supabase-js'
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const config = useRuntimeConfig()
+
+const serviceKey = config.supabaseServiceKey
+
+const supabase = createClient(
+  config.public.supabaseUrl!,
+  serviceKey!
+)
 
 const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi'
 
@@ -40,8 +43,8 @@ interface BGGItem {
 let sessionCookie: string | null = null
 
 async function loginToBGG(): Promise<void> {
-  const username = process.env.BGG_USERNAME
-  const password = process.env.BGG_PASSWORD
+  const username = config.bggUsername
+  const password = config.bggPassword
   
   if (!username || !password) {
     console.log('No BGG credentials found, attempting unauthenticated requests...')
@@ -68,8 +71,9 @@ async function loginToBGG(): Promise<void> {
   if (cookies) {
     // Extract only the cookie name=value part from each set-cookie header
     const cookieValues = cookies
-      .map(cookie => cookie.split(';')[0])
-      .filter(cookie => !cookie.includes('=deleted'))
+      .filter((cookie): cookie is string => cookie !== undefined)
+      .map((cookie) => cookie.split(';')[0])
+      .filter((cookie) => cookie && !cookie.includes('=deleted'))
     sessionCookie = cookieValues.join('; ')
     console.log('Successfully logged in to BGG')
   }
@@ -162,12 +166,23 @@ async function upsertMechanics(mechanics: Array<{ bggId: number; name: string }>
   const results: string[] = []
   
   for (const mechanic of mechanics) {
-    const record = await prisma.gameMechanic.upsert({
-      where: { bggId: mechanic.bggId },
-      update: { name: mechanic.name },
-      create: { bggId: mechanic.bggId, name: mechanic.name }
-    })
-    results.push(record.id)
+    const { data, error } = await supabase
+      .from('game_mechanics')
+      .upsert({
+        bgg_id: mechanic.bggId,
+        name: mechanic.name
+      }, {
+        onConflict: 'bgg_id'
+      })
+      .select('id')
+      .single()
+    
+    if (error) {
+      console.error(`Error upserting mechanic ${mechanic.name}:`, error)
+      continue
+    }
+    
+    results.push(data.id)
   }
   
   return results
@@ -177,12 +192,23 @@ async function upsertCategories(categories: Array<{ bggId: number; name: string 
   const results: string[] = []
   
   for (const category of categories) {
-    const record = await prisma.gameCategory.upsert({
-      where: { bggId: category.bggId },
-      update: { name: category.name },
-      create: { bggId: category.bggId, name: category.name }
-    })
-    results.push(record.id)
+    const { data, error } = await supabase
+      .from('game_categories')
+      .upsert({
+        bgg_id: category.bggId,
+        name: category.name
+      }, {
+        onConflict: 'bgg_id'
+      })
+      .select('id')
+      .single()
+    
+    if (error) {
+      console.error(`Error upserting category ${category.name}:`, error)
+      continue
+    }
+    
+    results.push(data.id)
   }
   
   return results
@@ -201,12 +227,31 @@ export async function importGame(bggId: number) {
   console.log(`Importing: ${gameData.name} (${gameData.yearPublished})`)
   
   // Upsert game
-  const game = await prisma.game.upsert({
-    where: { bggId: gameData.bggId },
-    update: gameData,
-    create: gameData
-  })
-  
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .upsert({
+      bgg_id: gameData.bggId,
+      name: gameData.name,
+      description: gameData.description,
+      year_published: gameData.yearPublished,
+      min_players: gameData.minPlayers,
+      max_players: gameData.maxPlayers,
+      playing_time: gameData.playingTime,
+      weight: gameData.weight,
+      image: gameData.image,
+      thumbnail: gameData.thumbnail,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'bgg_id'
+    })
+    .select('id, name')
+    .single()
+    
+  if (gameError || !game) {
+    console.error('Failed to upsert game:', gameError)
+    return null
+  }
+
   console.log(`Game upserted with ID: ${game.id}`)
   
   // Upsert mechanics and categories
@@ -214,27 +259,40 @@ export async function importGame(bggId: number) {
   const categoryIds = await upsertCategories(categories)
   
   // Clear existing joins
-  await prisma.gameMechanicJoin.deleteMany({ where: { gameId: game.id } })
-  await prisma.gameCategoryJoin.deleteMany({ where: { gameId: game.id } })
+  await supabase
+    .from('game_mechanic_joins')
+    .delete()
+    .eq('game_id', game.id)
+    
+  await supabase
+    .from('game_category_joins')
+    .delete()
+    .eq('game_id', game.id)
   
   // Create new joins
   if (mechanicIds.length > 0) {
-    await prisma.gameMechanicJoin.createMany({
-      data: mechanicIds.map(mechanicId => ({
-        gameId: game.id,
-        mechanicId
-      }))
-    })
+    const mechanicJoins = mechanicIds.map(mechanicId => ({
+      game_id: game.id,
+      mechanic_id: mechanicId
+    }))
+    
+    await supabase
+      .from('game_mechanic_joins')
+      .insert(mechanicJoins)
+      
     console.log(`Linked ${mechanicIds.length} mechanics`)
   }
   
   if (categoryIds.length > 0) {
-    await prisma.gameCategoryJoin.createMany({
-      data: categoryIds.map(categoryId => ({
-        gameId: game.id,
-        categoryId
-      }))
-    })
+    const categoryJoins = categoryIds.map(categoryId => ({
+      game_id: game.id,
+      category_id: categoryId
+    }))
+    
+    await supabase
+      .from('game_category_joins')
+      .insert(categoryJoins)
+      
     console.log(`Linked ${categoryIds.length} categories`)
   }
   
@@ -305,12 +363,9 @@ async function main() {
   
   const successCount = results.filter(r => r.success).length
   console.log(`\nImported ${successCount}/${results.length} games`)
-  
-  await prisma.$disconnect()
 }
 
-main().catch(async (e) => {
+main().catch((e: Error) => {
   console.error(e)
-  await prisma.$disconnect()
   process.exit(1)
 })
