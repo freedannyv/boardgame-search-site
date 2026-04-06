@@ -24,8 +24,8 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const { createClient } = await import('@supabase/supabase-js')
   const supabase = createClient(
-    config.public.supabase.url,
-    config.public.supabase.key
+    config.public.supabaseUrl,
+    config.public.supabaseKey
   )
 
   // Verify user exists

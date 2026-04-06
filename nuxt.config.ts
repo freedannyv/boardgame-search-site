@@ -16,11 +16,11 @@ export default defineNuxtConfig({
 
 runtimeConfig: {
   // Private (server only)
-  supabaseServiceKey: '',
+  supabaseSecretKey: '',
   bggApiToken: '',
   bggUsername: '',
   bggPassword: '',
-
+  
   public: {
     supabaseUrl: '',
     supabaseKey: '',
