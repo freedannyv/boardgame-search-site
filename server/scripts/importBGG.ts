@@ -3,9 +3,13 @@ import axios from 'axios'
 import { parseStringPromise } from 'xml2js'
 import { createClient } from '@supabase/supabase-js'
 
+const config = useRuntimeConfig()
+
+const serviceKey = config.supabaseServiceKey
+
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
+  config.public.supabaseUrl!,
+  serviceKey!
 )
 
 const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi'
@@ -39,8 +43,8 @@ interface BGGItem {
 let sessionCookie: string | null = null
 
 async function loginToBGG(): Promise<void> {
-  const username = process.env.BGG_USERNAME
-  const password = process.env.BGG_PASSWORD
+  const username = config.bggUsername
+  const password = config.bggPassword
   
   if (!username || !password) {
     console.log('No BGG credentials found, attempting unauthenticated requests...')

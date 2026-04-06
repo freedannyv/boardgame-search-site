@@ -73,15 +73,11 @@ To import board game data:
 ```bash
 # Import from BGG API
 npm run import:bgg
-
-# Import from CSV file
-npm run import:csv
 ```
 
 ## Project Structure
 - `app/` - Vue components and pages
 - `server/` - Server-side API routes and scripts
-- `scripts/` - Data import utilities
 - `plugins/` - Nuxt plugins
 - `public/` - Static assets
 
