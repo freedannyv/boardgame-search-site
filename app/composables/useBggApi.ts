@@ -40,6 +40,7 @@ interface CollectionParams {
 }
 
 export function useBggApi() {
+  console.log('usebggapi() function called')
   const config = useRuntimeConfig()
   const token = config.public.BGG_API_TOKEN
 

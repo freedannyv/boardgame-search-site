@@ -77,15 +77,21 @@ const signUp = async () => {
 
 const signInWithGoogle = async () => {
   loading.value = true
+  errorMessage.value = ''
 
-  const reponse = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: `${window.location.origin}/confirm`,
     },
   })
 
-  return reponse
+  if (error) {
+    errorMessage.value = error.message
+    loading.value = false
+  }
+
+  return { data, error }
 }
 </script>
 

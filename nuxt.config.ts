@@ -14,6 +14,11 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase'
   ],
   runtimeConfig: {
+    // Environment detection
+    isDev: process.env.NODE_ENV === 'development',
+    isPreview: process.env.NETLIFY === 'true' && process.env.CONTEXT === 'deploy-preview',
+    isProduction: process.env.NETLIFY === 'true' && process.env.CONTEXT === 'production',
+    
     // Private keys (only available on server-side)
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
@@ -25,6 +30,10 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseKey: process.env.SUPABASE_ANON_KEY,
       BGG_API_TOKEN: process.env.BGG_API_TOKEN,
+      
+      // Environment indicators for client-side
+      environment: process.env.NODE_ENV === 'development' ? 'staging' : 'production',
+      netlifyContext: process.env.CONTEXT || 'development',
     }
   },
 

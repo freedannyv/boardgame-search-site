@@ -25,3 +25,6 @@ logs
 
 # Import data
 /data
+
+# Local Netlify folder
+.netlify
