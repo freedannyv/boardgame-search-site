@@ -48,14 +48,14 @@ export default defineEventHandler(async (event) => {
     const rank = parseInt(item.querySelector('rank')?.getAttribute('value') || '0')
     
     // Extract categories and mechanics
-    const categories: string[] = []
-    const mechanics: string[] = []
+    const categories = []
+    const mechanics = []
     
-    item.querySelectorAll('link[type="boardgamecategory"]').forEach((link: Element) => {
+    item.querySelectorAll('link[type="boardgamecategory"]').forEach((link) => {
       categories.push(link.getAttribute('value') || '')
     })
     
-    item.querySelectorAll('link[type="boardgamemechanic"]').forEach((link: Element) => {
+    item.querySelectorAll('link[type="boardgamemechanic"]').forEach((link) => {
       mechanics.push(link.getAttribute('value') || '')
     })
 

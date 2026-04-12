@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "import:bgg": "tsx server/scripts/importBGG.ts"
+    "import:bgg": "node server/scripts/importBGG.js"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.15.2",
@@ -19,7 +19,6 @@
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@pinia/nuxt": "^0.11.3",
     "@tanstack/vue-query": "^5.92.9",
-    "@types/jsdom": "^28.0.1",
     "axios": "^1.13.6",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.3.1",
@@ -33,9 +32,5 @@
     "xml2js": "^0.6.2",
     "zod": "^4.3.6"
   },
-  "devDependencies": {
-    "@types/pg": "^8.18.0",
-    "@types/xml2js": "^0.4.14",
-    "tsx": "^4.21.0"
-  }
+  "devDependencies": {}
 }

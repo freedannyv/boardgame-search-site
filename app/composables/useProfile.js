@@ -1,8 +1,6 @@
-import type { Database } from '~/types/database.types'
-
 export const useProfile = () => {
   const user = useSupabaseUser()
-  const supabase = useSupabaseClient<Database>()
+  const supabase = useSupabaseClient()
 
   const ensureProfile = async () => {
     const userId = user.value?.sub

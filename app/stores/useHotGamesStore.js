@@ -2,24 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { parseBggHotItemsResponse } from '~/utils/bggParser'
 
-interface Game {
-  id: string
-  name: string
-  yearPublished?: number | null
-  thumbnail?: string | null
-  average?: number | null
-}
-
 export const useHotGamesStore = defineStore('hotGames', () => {
   // STATE
-  const hotGames = ref<Game[]>([])
+  const hotGames = ref([])
   const isLoaded = ref(false)
   const isLoading = ref(false)
-  const lastFetched = ref<Date | null>(null)
-  const error = ref<string | null>(null)
+  const lastFetched = ref(null)
+  const error = ref(null)
 
   // ACTIONS
-  const fetchHotGames = async (force = false): Promise<void> => {
+  const fetchHotGames = async (force = false) => {
     // Skip if already loaded and not forcing refresh
     if (isLoaded.value && !force) {
       return
@@ -29,8 +21,12 @@ export const useHotGamesStore = defineStore('hotGames', () => {
       isLoading.value = true
       error.value = null
       
+      console.log('Fetching hot games...')
+      
       const { getHotItems } = useBggApi()
       const response = await getHotItems('boardgame')
+
+      console.log('Hot games response:', response)
       
       // Parse XML response and transform to game format
       const parsedGames = parseBggHotItemsResponse(response.data || response)
@@ -47,7 +43,7 @@ export const useHotGamesStore = defineStore('hotGames', () => {
     }
   }
 
-  const clearHotGames = (): void => {
+  const clearHotGames = () => {
     hotGames.value = []
     isLoaded.value = false
     lastFetched.value = null

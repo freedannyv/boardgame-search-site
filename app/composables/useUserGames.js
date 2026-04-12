@@ -1,77 +1,13 @@
-export type CollectionCondition = 'new' | 'used'
-
-export interface AddToCollectionInput {
-  gameId: string
-  addedToCollectionDate?: string
-  receivedAsGift?: boolean
-  pricePaid?: number | null
-  currency?: string | null
-  condition?: CollectionCondition
-  isComplete?: boolean
-  missingComponents?: string | null
-  edition?: string | null
-  isSleeved?: boolean
-  isOrganized?: boolean
-  reasonForBuying?: string | null
-  receivedFrom?: string | null
-  thumbnail?: string | null
-  image?: string | null
-  name?: string | null
-}
-
-export interface CollectionItem {
-  id: string
-  user_id: string
-  game_id: string
-  added_to_collection_date: string
-  received_as_gift: boolean
-  price_paid: number | null
-  currency: string | null
-  condition: CollectionCondition
-  is_complete: boolean
-  missing_components: string | null
-  edition: string | null
-  is_sleeved: boolean
-  is_organized: boolean
-  reason_for_buying: string | null
-  received_from: string | null
-  created_at: string
-  updated_at: string,
-  thumbnail?: string | null
-  image?: string | null,
-  name: string | null
-}
-
-export interface AddToWishlistInput {
-  gameId: string
-  notes?: string | null
-  thumbnail?: string | null
-  image?: string | null
-  name?: string | null
-}
-
-export interface WishlistItem {
-  id: string
-  user_id: string
-  game_id: string
-  notes: string | null
-  created_at: string
-  updated_at: string
-  thumbnail?: string | null
-  image?: string | null
-  name?: string | null
-}
-
 export const useUserGames = () => {
-  const supabase = useSupabaseClient() as any
+  const supabase = useSupabaseClient()
   const user = useSupabaseUser()
 
-  const normalizeDate = (input?: string): string => {
+  const normalizeDate = (input) => {
     const fallback = new Date().toISOString().split('T')[0]
-    return (input || fallback) as string
+    return input || fallback
   }
 
-  const getCurrentUserId = (): string => {
+  const getCurrentUserId = () => {
     const userId = user.value?.sub
     if (!userId) {
       throw new Error('No user is currently logged in')
@@ -80,7 +16,7 @@ export const useUserGames = () => {
   }
 
   // COLLECTION FUNCTIONS
-  const addToCollection = async (input: AddToCollectionInput): Promise<CollectionItem> => {
+  const addToCollection = async (input) => {
     const userId = getCurrentUserId()
     
     // Validation: if game is incomplete, missing components must be specified
@@ -138,7 +74,7 @@ export const useUserGames = () => {
     }
   }
 
-  const removeFromCollection = async (gameId: string): Promise<void> => {
+  const removeFromCollection = async (gameId) => {
     const userId = getCurrentUserId()
 
     try {
@@ -157,7 +93,7 @@ export const useUserGames = () => {
     }
   }
 
-  const isInCollection = async (gameId: string): Promise<boolean> => {
+  const isInCollection = async (gameId) => {
     // Get the store instance
     const collectionStore = useCollectionStore()
     
@@ -169,7 +105,7 @@ export const useUserGames = () => {
     return collectionStore.collection.some(item => item.game_id === gameId)
   }
 
-  const getCollection = async (): Promise<CollectionItem[]> => {
+  const getCollection = async () => {
     const userId = getCurrentUserId()
 
     const { data, error } = await supabase
@@ -185,7 +121,7 @@ export const useUserGames = () => {
     return data || []
   }
 
-  const updateCollectionItem = async (gameId: string, updates: Partial<CollectionItem>) => {
+  const updateCollectionItem = async (gameId, updates) => {
     const userId = getCurrentUserId()
 
     // Validation: if game is incomplete, missing components must be specified
@@ -212,7 +148,7 @@ export const useUserGames = () => {
   }
 
   // WISHLIST FUNCTIONS
-  const addToWishlist = async (input: AddToWishlistInput): Promise<WishlistItem> => {
+  const addToWishlist = async (input) => {
     const userId = getCurrentUserId()
 
     try {
@@ -243,7 +179,7 @@ export const useUserGames = () => {
     }
   }
 
-  const removeFromWishlist = async (gameId: string): Promise<void> => {
+  const removeFromWishlist = async (gameId) => {
     const userId = getCurrentUserId()
 
     const { error } = await supabase
@@ -253,7 +189,7 @@ export const useUserGames = () => {
       .eq('game_id', gameId)
   }
 
-  const isInWishlist = async (gameId: string): Promise<boolean> => {
+  const isInWishlist = async (gameId) => {
     const userId = getCurrentUserId()
 
     const { data, error } = await supabase
@@ -270,7 +206,7 @@ export const useUserGames = () => {
     return !!data
   }
 
-  const getWishlist = async (): Promise<WishlistItem[]> => {
+  const getWishlist = async () => {
     const userId = getCurrentUserId()
 
     const { data, error } = await supabase
@@ -286,7 +222,7 @@ export const useUserGames = () => {
     return data || []
   }
 
-  const moveWishlistToCollection = async (gameId: string, collectionData: AddToCollectionInput): Promise<CollectionItem> => {
+  const moveWishlistToCollection = async (gameId, collectionData) => {
     const userId = getCurrentUserId()
 
     // First add to collection and capture the result

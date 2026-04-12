@@ -1,42 +1,14 @@
 // BGG XML Response Parser
-import type { SearchResult } from '~/components/SearchBar.vue'
 
 // Decode HTML entities like &#039; to proper characters
-function decodeHtmlEntities(text: string): string {
+function decodeHtmlEntities(text) {
   const textarea = document.createElement('textarea')
   textarea.innerHTML = text
   return textarea.value
 }
 
-interface BggItem {
-  id: string
-  type: string
-  name: {
-    value: string
-    type: string
-  }[]
-  yearpublished?: {
-    value: string
-  }
-  thumbnail?: string
-  image?: string
-  statistics?: {
-    ratings: {
-      average: {
-        value: string
-      }
-    }
-  }
-}
-
-interface BggSearchResponse {
-  items?: {
-    item: BggItem[]
-  }
-}
-
-export function parseBggSearchResponse(xmlString: string): SearchResult[] {
-  const results: SearchResult[] = []
+export function parseBggSearchResponse(xmlString) {
+  const results = []
   
   try {
     // Simple XML parsing for BGG search response
@@ -52,7 +24,7 @@ export function parseBggSearchResponse(xmlString: string): SearchResult[] {
       const thumbnailMatch = itemXml.match(/<thumbnail>([^<]*)<\/thumbnail>/)
       
       if (idMatch && nameMatch && idMatch[1] && nameMatch[1]) {
-        const result: SearchResult = {
+        const result = {
           id: idMatch[1],
           name: decodeHtmlEntities(nameMatch[1]),
           yearPublished: yearMatch?.[1] ? parseInt(yearMatch[1]) : undefined,
@@ -70,8 +42,8 @@ export function parseBggSearchResponse(xmlString: string): SearchResult[] {
   }
 }
 
-export function parseBggHotItemsResponse(xmlString: string): SearchResult[] {
-  const results: SearchResult[] = []
+export function parseBggHotItemsResponse(xmlString) {
+  const results = []
   
   try {
     // Extract items using regex patterns for hot items
@@ -88,7 +60,7 @@ export function parseBggHotItemsResponse(xmlString: string): SearchResult[] {
       // console.log('Thumbnail match:', thumbnailMatch)
       
       if (idMatch && nameMatch && idMatch[1] && nameMatch[1]) {
-        const result: SearchResult = {
+        const result = {
           id: idMatch[1],
           name: decodeHtmlEntities(nameMatch[1]),
           yearPublished: yearMatch?.[1] ? parseInt(yearMatch[1]) : undefined,
@@ -108,8 +80,8 @@ export function parseBggHotItemsResponse(xmlString: string): SearchResult[] {
 }
 
 // Extract expansion IDs from base game response
-export function extractExpansionIds(xmlString: string): string[] {
-  const expansionIds: string[] = []
+export function extractExpansionIds(xmlString) {
+  const expansionIds = []
   
   try {
     // Find all expansion links in the base game
@@ -129,8 +101,8 @@ export function extractExpansionIds(xmlString: string): string[] {
   }
 }
 
-export function parseBggExpansionsResponse(xmlString: string, baseGameId: string): SearchResult[] {
-  const results: SearchResult[] = []
+export function parseBggExpansionsResponse(xmlString, baseGameId) {
+  const results = []
   
   try {
     // Extract items using regex patterns
@@ -144,7 +116,7 @@ export function parseBggExpansionsResponse(xmlString: string, baseGameId: string
       
       // Since we're using type parameter, all items should be expansions
       if (idMatch && nameMatch && idMatch[1] && nameMatch[1]) {
-        const result: SearchResult = {
+        const result = {
           id: idMatch[1],
           name: decodeHtmlEntities(nameMatch[1]),
           yearPublished: yearMatch?.[1] ? parseInt(yearMatch[1]) : undefined,
@@ -163,7 +135,7 @@ export function parseBggExpansionsResponse(xmlString: string, baseGameId: string
   }
 }
 
-export function parseBggThingResponse(xmlString: string): SearchResult | null {
+export function parseBggThingResponse(xmlString) {
   try {
     const itemMatches = xmlString.match(/<item[^>]*>[\s\S]*?<\/item>/g) || []
     
@@ -197,7 +169,7 @@ export function parseBggThingResponse(xmlString: string): SearchResult | null {
           playingTime: playingTimeMatch?.[1] ? parseInt(playingTimeMatch[1]) : undefined,
           weight: weightMatch?.[1] ? parseFloat(weightMatch[1]) : null,
           description: descriptionMatch?.[1] ? decodeHtmlEntities(descriptionMatch[1]) : null
-        } as any // Using any for now since SearchResult interface doesn't include all fields
+        }
       }
     }
     

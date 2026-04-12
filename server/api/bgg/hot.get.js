@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     })
     
     return response
-  } catch (error: any) {
+  } catch (error) {
     console.error('BGG Hot Items API Error:', error)
     throw createError({
       statusCode: 500,

@@ -1,36 +1,14 @@
 import { defineStore } from 'pinia'
 
-interface Player {
-  id: string
-  name: string
-  score?: number | null
-}
-
-interface Game {
-  id: string | number
-  name: string
-  thumbnail?: string | null
-}
-
-interface GameSession {
-  id: string
-  game: Game
-  players: Player[]
-  startedAt: number | null // timestamp when timer was started
-  accumulatedSeconds: number // time accumulated before pauses
-  isRunning: boolean
-  isPaused: boolean
-}
-
 export const useGameSessionStore = defineStore('gameSession', () => {
-  const activeSession = ref<GameSession | null>(null)
+  const activeSession = ref(null)
   const showSessionModal = ref(false)
 
   // Getters
   const hasActiveSession = computed(() => activeSession.value !== null)
 
   // Function (not computed) because Date.now() isn't reactive
-  function getCurrentElapsedSeconds(): number {
+  function getCurrentElapsedSeconds() {
     if (!activeSession.value) return 0
 
     const { startedAt, accumulatedSeconds, isRunning, isPaused } = activeSession.value
@@ -44,7 +22,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   }
 
   // Actions
-  function startSession(game: Game) {
+  function startSession(game) {
     activeSession.value = {
       id: crypto.randomUUID(),
       game,
@@ -56,7 +34,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     }
   }
 
-  function startTimer(): boolean {
+  function startTimer() {
     if (!activeSession.value) return false
     
     // Require at least 1 player to start
@@ -98,7 +76,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     activeSession.value.isPaused = false
   }
 
-  function addPlayer(name: string) {
+  function addPlayer(name) {
     if (!activeSession.value) return
 
     activeSession.value.players.push({
@@ -107,7 +85,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     })
   }
 
-  function removePlayer(playerId: string) {
+  function removePlayer(playerId) {
     if (!activeSession.value) return
 
     activeSession.value.players = activeSession.value.players.filter(
@@ -115,7 +93,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     )
   }
 
-  function finishSession(): { players: Player[], elapsedSeconds: number } | null {
+  function finishSession() {
     if (!activeSession.value || activeSession.value.players.length === 0) return null
 
     const timerMinLimit = getCurrentElapsedSeconds()

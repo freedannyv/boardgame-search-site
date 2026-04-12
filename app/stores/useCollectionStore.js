@@ -1,39 +1,38 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { CollectionItem, WishlistItem, AddToCollectionInput, AddToWishlistInput } from '~/composables/useUserGames'
 
 export const useCollectionStore = defineStore('userGames', () => {
   // STATE
-  const collection = ref<CollectionItem[]>([])
-  const wishlist = ref<WishlistItem[]>([])
+  const collection = ref([])
+  const wishlist = ref([])
   const isLoaded = ref(false)
   const isLoading = ref(false)
   const hasLoadedOnce = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
 
   // COMPOSABLE
   const userGames = useUserGames()
 
   // COMPUTED LOOKUP SETS
   const collectionGameIds = computed(() => {
-    return new Set(collection.value.map((item: CollectionItem) => item.game_id.toString()))
+    return new Set(collection.value.map(item => item.game_id.toString()))
   })
 
   const wishlistGameIds = computed(() => {
-    return new Set(wishlist.value.map((item: WishlistItem) => item.game_id.toString()))
+    return new Set(wishlist.value.map(item => item.game_id.toString()))
   })
 
   // CONVENIENCE METHODS
-  const isGameInCollection = (gameId: string | number): boolean => {
+  const isGameInCollection = (gameId) => {
     return collectionGameIds.value.has(gameId.toString())
   }
 
-  const isGameInWishlist = (gameId: string | number): boolean => {
+  const isGameInWishlist = (gameId) => {
     return wishlistGameIds.value.has(gameId.toString())
   }
 
   // ACTIONS
-  const loadUserGames = async (force = false): Promise<void> => {
+  const loadUserGames = async (force = false) => {
     if (isLoaded.value && !force) {
       return
     }
@@ -64,7 +63,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const resetUserGames = (): void => {
+  const resetUserGames = () => {
     // Clear collection
     collection.value = []
     // Clear wishlist
@@ -110,7 +109,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     await Promise.all([loadCollection(), loadWishlist()])
   }
 
-  const addGameToCollection = async (input: AddToCollectionInput): Promise<CollectionItem> => {
+  const addGameToCollection = async (input) => {
     try {
       isLoading.value = true
       error.value = null
@@ -145,7 +144,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const removeGameFromCollection = async (gameId: string | number): Promise<void> => {
+  const removeGameFromCollection = async (gameId) => {
     try {
       isLoading.value = true
       error.value = null
@@ -163,7 +162,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const addGameToWishlist = async (input: AddToWishlistInput): Promise<WishlistItem> => {
+  const addGameToWishlist = async (input) => {
     try {
       isLoading.value = true
       error.value = null
@@ -192,7 +191,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const removeGameFromWishlist = async (gameId: string): Promise<void> => {
+  const removeGameFromWishlist = async (gameId) => {
     try {
       isLoading.value = true
       error.value = null
@@ -210,7 +209,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const updateGameInCollection = async (gameId: string, updates: Partial<AddToCollectionInput>): Promise<CollectionItem> => {
+  const updateGameInCollection = async (gameId, updates) => {
     try {
       isLoading.value = true
       error.value = null
@@ -238,7 +237,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const moveGameWishlistToCollection = async (input: AddToCollectionInput): Promise<CollectionItem> => {
+  const moveGameWishlistToCollection = async (input) => {
     try {
       isLoading.value = true
       error.value = null
@@ -272,7 +271,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const addToWishlist = async (input: AddToWishlistInput) => {
+  const addToWishlist = async (input) => {
     try {
       isLoading.value = true
       error.value = null
@@ -297,7 +296,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const removeFromWishlist = async (gameId: string) => {
+  const removeFromWishlist = async (gameId) => {
     try {
       isLoading.value = true
       error.value = null
@@ -317,7 +316,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const moveWishlistToCollection = async (gameId: string, collectionData: AddToCollectionInput) => {
+  const moveWishlistToCollection = async (gameId, collectionData) => {
     try {
       isLoading.value = true
       error.value = null
@@ -334,7 +333,7 @@ export const useCollectionStore = defineStore('userGames', () => {
     }
   }
 
-  const updateCollectionItem = async (gameId: string, updates: Partial<CollectionItem>) => {
+  const updateCollectionItem = async (gameId, updates) => {
     try {
       isLoading.value = true
       error.value = null

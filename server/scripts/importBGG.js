@@ -3,48 +3,31 @@ import axios from 'axios'
 import { parseStringPromise } from 'xml2js'
 import { createClient } from '@supabase/supabase-js'
 
-const config = useRuntimeConfig()
+const serviceKey = process.env.SUPABASE_SERVICE_KEY
+const supabaseUrl = process.env.NUXT_PUBLIC_SUPABASE_URL
+const bggUsername = process.env.BGG_USERNAME
+const bggPassword = process.env.BGG_PASSWORD
 
-const serviceKey = config.supabaseServiceKey
+if (!serviceKey || !supabaseUrl) {
+  console.error('Missing required environment variables:')
+  console.error('- SUPABASE_SERVICE_KEY')
+  console.error('- NUXT_PUBLIC_SUPABASE_URL')
+  console.error('\nPlease set these in your .env file and try again.')
+  process.exit(1)
+}
 
 const supabase = createClient(
-  config.public.supabaseUrl!,
-  serviceKey!
+  supabaseUrl,
+  serviceKey
 )
 
 const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi'
 
-interface BGGLink {
-  $: {
-    type: string
-    id: string
-    value: string
-  }
-}
+let sessionCookie = null
 
-interface BGGItem {
-  $: { id: string }
-  name: Array<{ $: { type: string; value: string } }>
-  description: string[]
-  yearpublished: Array<{ $: { value: string } }>
-  minplayers: Array<{ $: { value: string } }>
-  maxplayers: Array<{ $: { value: string } }>
-  playingtime: Array<{ $: { value: string } }>
-  image: string[]
-  thumbnail: string[]
-  link: BGGLink[]
-  statistics: Array<{
-    ratings: Array<{
-      averageweight: Array<{ $: { value: string } }>
-    }>
-  }>
-}
-
-let sessionCookie: string | null = null
-
-async function loginToBGG(): Promise<void> {
-  const username = config.bggUsername
-  const password = config.bggPassword
+async function loginToBGG() {
+  const username = bggUsername
+  const password = bggPassword
   
   if (!username || !password) {
     console.log('No BGG credentials found, attempting unauthenticated requests...')
@@ -71,7 +54,7 @@ async function loginToBGG(): Promise<void> {
   if (cookies) {
     // Extract only the cookie name=value part from each set-cookie header
     const cookieValues = cookies
-      .filter((cookie): cookie is string => cookie !== undefined)
+      .filter((cookie) => cookie !== undefined)
       .map((cookie) => cookie.split(';')[0])
       .filter((cookie) => cookie && !cookie.includes('=deleted'))
     sessionCookie = cookieValues.join('; ')
@@ -79,13 +62,13 @@ async function loginToBGG(): Promise<void> {
   }
 }
 
-async function fetchGameFromBGG(bggId: number): Promise<BGGItem | null> {
+async function fetchGameFromBGG(bggId) {
   // Use old API v1 endpoint format
   const url = `${BGG_API_BASE}/boardgame/${bggId}?stats=1`
   
   console.log(`Fetching game ${bggId} from BGG...`)
   
-  const headers: Record<string, string> = { 
+  const headers = { 
     'Accept': 'text/xml, application/xml, */*',
     'Accept-Language': 'en-US,en;q=0.9',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -114,7 +97,7 @@ async function fetchGameFromBGG(bggId: number): Promise<BGGItem | null> {
   return parsed.boardgames.boardgame[0]
 }
 
-function extractGameData(item: BGGItem) {
+function extractGameData(item) {
   const primaryName = item.name?.find(n => n.$.type === 'primary')
   
   return {
@@ -141,9 +124,9 @@ function extractGameData(item: BGGItem) {
   }
 }
 
-function extractLinksFromItem(item: BGGItem) {
-  const mechanics: Array<{ bggId: number; name: string }> = []
-  const categories: Array<{ bggId: number; name: string }> = []
+function extractLinksFromItem(item) {
+  const mechanics = []
+  const categories = []
   
   for (const link of item.link ?? []) {
     if (link.$.type === 'boardgamemechanic') {
@@ -162,8 +145,8 @@ function extractLinksFromItem(item: BGGItem) {
   return { mechanics, categories }
 }
 
-async function upsertMechanics(mechanics: Array<{ bggId: number; name: string }>) {
-  const results: string[] = []
+async function upsertMechanics(mechanics) {
+  const results = []
   
   for (const mechanic of mechanics) {
     const { data, error } = await supabase
@@ -188,8 +171,8 @@ async function upsertMechanics(mechanics: Array<{ bggId: number; name: string }>
   return results
 }
 
-async function upsertCategories(categories: Array<{ bggId: number; name: string }>) {
-  const results: string[] = []
+async function upsertCategories(categories) {
+  const results = []
   
   for (const category of categories) {
     const { data, error } = await supabase
@@ -214,7 +197,7 @@ async function upsertCategories(categories: Array<{ bggId: number; name: string 
   return results
 }
 
-export async function importGame(bggId: number) {
+export async function importGame(bggId) {
   const item = await fetchGameFromBGG(bggId)
   
   if (!item) {
@@ -299,8 +282,8 @@ export async function importGame(bggId: number) {
   return game
 }
 
-export async function importMultipleGames(bggIds: number[], delayMs = 1000) {
-  const results: Array<{ bggId: number; success: boolean; name?: string; error?: string }> = []
+export async function importMultipleGames(bggIds, delayMs = 1000) {
+  const results = []
   
   for (const bggId of bggIds) {
     try {
@@ -333,8 +316,8 @@ async function main() {
   const args = process.argv.slice(2)
   
   if (args.length === 0) {
-    console.log('Usage: npx tsx server/scripts/importBGG.ts <bggId> [bggId2] [bggId3] ...')
-    console.log('Example: npx tsx server/scripts/importBGG.ts 174430 167791 224517')
+    console.log('Usage: node server/scripts/importBGG.js <bggId> [bggId2] [bggId3] ...')
+    console.log('Example: node server/scripts/importBGG.js 174430 167791 224517')
     process.exit(1)
   }
   
@@ -355,9 +338,9 @@ async function main() {
   console.log('\n--- Import Summary ---')
   for (const result of results) {
     if (result.success) {
-      console.log(`✓ ${result.bggId}: ${result.name}`)
+      console.log(`\u2713 ${result.bggId}: ${result.name}`)
     } else {
-      console.log(`✗ ${result.bggId}: ${result.error}`)
+      console.log(`\u2717 ${result.bggId}: ${result.error}`)
     }
   }
   
@@ -365,7 +348,7 @@ async function main() {
   console.log(`\nImported ${successCount}/${results.length} games`)
 }
 
-main().catch((e: Error) => {
+main().catch((e) => {
   console.error(e)
   process.exit(1)
 })

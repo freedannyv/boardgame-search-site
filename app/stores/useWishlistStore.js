@@ -1,29 +1,25 @@
 import { defineStore } from 'pinia'
 
-interface WishlistState {
-  gameIds: Set<number>
-}
-
 export const useWishlistStore = defineStore('wishlist', {
-  state: (): WishlistState => ({
-    gameIds: new Set<number>()
+  state: () => ({
+    gameIds: new Set()
   }),
   getters: {
-    isWishlisted: (state) => (gameId: number): boolean => {
+    isWishlisted: (state) => (gameId) => {
       return state.gameIds.has(gameId)
     }
   },
   actions: {
-    setWishlist(ids: number[]) {
+    setWishlist(ids) {
       this.gameIds = new Set(ids)
     },
-    addGame(gameId: number) {
+    addGame(gameId) {
       this.gameIds.add(gameId)
     },
-    removeGame(gameId: number) {
+    removeGame(gameId) {
       this.gameIds.delete(gameId)
     },
-    toggleGame(gameId: number) {
+    toggleGame(gameId) {
       if (this.gameIds.has(gameId)) {
         this.gameIds.delete(gameId)
       } else {

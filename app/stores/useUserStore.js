@@ -1,26 +1,14 @@
 import { defineStore } from 'pinia'
 
-interface UserState {
-  id: number | null
-  username: string | null
-  displayName: string | null
-  preferences: Record<string, any>
-}
-
 export const useUserStore = defineStore('user', {
-  state: (): UserState => ({
+  state: () => ({
     id: null,
     username: null,
     displayName: null,
     preferences: {}
   }),
   actions: {
-    setUser(userData: {
-      id: number
-      username: string
-      displayName: string
-      preferences?: Record<string, any>
-    }) {
+    setUser(userData) {
       this.id = userData.id
       this.username = userData.username
       this.displayName = userData.displayName
@@ -32,7 +20,7 @@ export const useUserStore = defineStore('user', {
       this.displayName = null
       this.preferences = {}
     },
-    updatePreferences(preferences: Record<string, any>) {
+    updatePreferences(preferences) {
       this.preferences = { ...this.preferences, ...preferences }
     }
   }

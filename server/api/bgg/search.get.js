@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     console.log('Response type:', typeof response)
     console.log('Response preview:', typeof response === 'string' ? response.substring(0, 200) : response)
     return response
-  } catch (error: any) {
+  } catch (error) {
     console.error('Server error:', error.message)
     console.error('Error status:', error.status)
     console.error('Full error:', error)

@@ -1,32 +1,22 @@
 import { defineStore } from 'pinia'
 
-interface Friend {
-  id: number
-  username: string
-  collectionCount: number
-}
-
-interface FriendsState {
-  friends: Friend[]
-}
-
 export const useFriendsStore = defineStore('friends', {
-  state: (): FriendsState => ({
+  state: () => ({
     friends: []
   }),
   getters: {
-    friendIds: (state): number[] => {
+    friendIds: (state) => {
       return state.friends.map(friend => friend.id)
     }
   },
   actions: {
-    setFriends(friendsArray: Friend[]) {
+    setFriends(friendsArray) {
       this.friends = friendsArray
     },
-    addFriend(friend: Friend) {
+    addFriend(friend) {
       this.friends.push(friend)
     },
-    removeFriend(friendId: number) {
+    removeFriend(friendId) {
       this.friends = this.friends.filter(friend => friend.id !== friendId)
     }
   }

@@ -1,17 +1,7 @@
 import { defineStore } from 'pinia'
 
-interface Game {
-  id: string
-  name: string
-  thumbnail: string | null
-  average: number
-  minPlayers: number
-  maxPlayers: number
-  playingTime: number
-}
-
 export const usePlaceholderGamesStore = defineStore('placeholderGames', {
-  state: (): { games: Game[] } => ({
+  state: () => ({
     games: [
       { id: '1', name: 'Wingspan', thumbnail: null, average: 8.1, minPlayers: 1, maxPlayers: 5, playingTime: 70 },
       { id: '2', name: 'Everdell', thumbnail: null, average: 8.0, minPlayers: 1, maxPlayers: 4, playingTime: 80 },
@@ -25,4 +15,3 @@ export const usePlaceholderGamesStore = defineStore('placeholderGames', {
     getPlaceholderGames: (state) => state.games
   }
 })
-

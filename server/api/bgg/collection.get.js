@@ -1,4 +1,4 @@
-// BGG User API Route
+// BGG Collection API Route
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const config = useRuntimeConfig()
@@ -11,11 +11,14 @@ export default defineEventHandler(async (event) => {
   }
   
   try {
-    const response = await $fetch('https://boardgamegeek.com/xmlapi2/user', {
+    const response = await $fetch('https://boardgamegeek.com/xmlapi2/collection', {
       method: 'GET',
       query: {
         username: query.username,
-        type: query.type || 'boardgame'
+        subtype: query.subtype || 'boardgame',
+        excludesubtype: query.excludesubtype,
+        brief: query.brief,
+        stats: query.stats
       },
       headers: {
         'Accept': 'application/xml',
@@ -24,11 +27,11 @@ export default defineEventHandler(async (event) => {
     })
     
     return response
-  } catch (error: any) {
-    console.error('BGG User API Error:', error)
+  } catch (error) {
+    console.error('BGG Collection API Error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to get user information'
+      statusMessage: 'Failed to get user collection'
     })
   }
 })

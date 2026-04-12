@@ -1,36 +1,7 @@
 import { ref, computed } from 'vue'
 
-// Types
-export interface GameReview {
-  gameId: string
-  criteria: Record<string, number>
-  personalRating: number
-  favoritePlayerCount: number
-  wouldRecommend: boolean
-  likes: string[]
-  dislikes: string[]
-  overallAverage: number
-  timestamp: number
-}
-
-export interface GameReviews {
-  firstReview?: GameReview
-  secondReview?: GameReview
-  thirdReview?: GameReview
-  fourthReview?: GameReview
-  fifthReview?: GameReview
-  // Can extend for more reviews
-}
-
-export interface GameRatingData {
-  gameId: string
-  averageRating: number
-  totalReviews: number
-  lastUpdated: number
-}
-
 // Local storage helpers
-function getLocalStorageData<T>(key: string, defaultValue: T): T {
+function getLocalStorageData(key, defaultValue) {
   if (typeof window === 'undefined') return defaultValue
   
   try {
@@ -42,7 +13,7 @@ function getLocalStorageData<T>(key: string, defaultValue: T): T {
   }
 }
 
-function setLocalStorageData<T>(key: string, value: T): void {
+function setLocalStorageData(key, value) {
   if (typeof window === 'undefined') return
   
   try {
@@ -53,8 +24,8 @@ function setLocalStorageData<T>(key: string, value: T): void {
 }
 
 // Reactive storage
-const reviewsStorage = ref<Record<string, GameReviews>>(getLocalStorageData('game-reviews', {}))
-const ratingsStorage = ref<Record<string, GameRatingData>>(getLocalStorageData('game-ratings', {}))
+const reviewsStorage = ref(getLocalStorageData('game-reviews', {}))
+const ratingsStorage = ref(getLocalStorageData('game-ratings', {}))
 
 // Sync with localStorage
 watch(reviewsStorage, (newValue) => {
@@ -67,7 +38,7 @@ watch(ratingsStorage, (newValue) => {
 
 export function useReviews() {
   // Save a review for a game
-  function saveReview(gameId: string, review: GameReview): void {
+  function saveReview(gameId, review) {
     const currentReviews = reviewsStorage.value[gameId] || {}
     
     // Determine which review slot to use
@@ -96,8 +67,8 @@ export function useReviews() {
   }
 
   // Update the main rating for a game
-  function updateMainRating(gameId: string, reviews: GameReviews): void {
-    const allReviews = Object.values(reviews).filter(Boolean) as GameReview[]
+  function updateMainRating(gameId, reviews) {
+    const allReviews = Object.values(reviews).filter(Boolean)
     
     if (allReviews.length === 0) return
     
@@ -114,31 +85,31 @@ export function useReviews() {
   }
 
   // Get all reviews for a game
-  function getGameReviews(gameId: string): GameReviews {
+  function getGameReviews(gameId) {
     return reviewsStorage.value[gameId] || {}
   }
 
   // Get the main rating for a game
-  function getGameRating(gameId: string): GameRatingData | null {
+  function getGameRating(gameId) {
     return ratingsStorage.value[gameId] || null
   }
 
   // Get review count for a game
-  function getReviewCount(gameId: string): number {
+  function getReviewCount(gameId) {
     const reviews = reviewsStorage.value[gameId]
     if (!reviews) return 0
     return Object.values(reviews).filter(Boolean).length
   }
 
   // Check if user has reviewed a game
-  function hasReviewed(gameId: string): boolean {
+  function hasReviewed(gameId) {
     return getReviewCount(gameId) > 0
   }
 
   // Get the latest review for a game
-  function getLatestReview(gameId: string): GameReview | null {
+  function getLatestReview(gameId) {
     const reviews = getGameReviews(gameId)
-    const allReviews = Object.values(reviews).filter(Boolean) as GameReview[]
+    const allReviews = Object.values(reviews).filter(Boolean)
     
     if (allReviews.length === 0) return null
     
@@ -148,7 +119,7 @@ export function useReviews() {
   }
 
   // Delete all reviews for a game (for testing/admin)
-  function deleteGameReviews(gameId: string): void {
+  function deleteGameReviews(gameId) {
     const newReviews = { ...reviewsStorage.value }
     const newRatings = { ...ratingsStorage.value }
     
@@ -160,12 +131,12 @@ export function useReviews() {
   }
 
   // Get all games with ratings
-  function getAllRatedGames(): GameRatingData[] {
+  function getAllRatedGames() {
     return Object.values(ratingsStorage.value)
   }
 
   // Get top rated games
-  function getTopRatedGames(limit: number = 10): GameRatingData[] {
+  function getTopRatedGames(limit = 10) {
     return getAllRatedGames()
       .sort((a, b) => b.averageRating - a.averageRating)
       .slice(0, limit)
